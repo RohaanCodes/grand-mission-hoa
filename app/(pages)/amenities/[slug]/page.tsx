@@ -121,13 +121,7 @@ export default function AmenityDetailPage() {
               <Phone className="w-5 h-5" />
               Contact Clubhouse
             </Link>
-
-            <Link
-              href="/reservations"
-              className="flex-1 border border-primary text-primary py-4 rounded-xl font-semibold text-center hover:bg-primary/5 transition-all"
-            >
-              View Reservation Guidelines
-            </Link>
+ 
           </div>
         </div>
       </motion.div>

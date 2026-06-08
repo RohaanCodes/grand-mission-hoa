@@ -109,12 +109,7 @@ export function Navbar() {
                 >
                   Contacts
                 </Link>
-                <Link
-                  href="/reservations"
-                  className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors"
-                >
-                  Reservations
-                </Link>
+                
                 <Link
                   href="/faqs"
                   className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors last:rounded-b-xl"
