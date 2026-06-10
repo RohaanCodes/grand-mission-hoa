@@ -86,7 +86,7 @@ export default function Home() {
       <HeroSection
         title={heroTitle}
         subtitle={heroSubtitle}
-        imageUrl="/images/hero-monument.jpg"
+        imageUrl="/images/hero-monument.png"
       />
 
       {/* ==================== BIG GALLERY CAROUSEL ==================== */}
