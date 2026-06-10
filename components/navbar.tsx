@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X, ChevronDown } from 'lucide-react'
@@ -9,9 +9,32 @@ import { motion } from 'framer-motion'
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const mobileMenuRef = useRef<HTMLDivElement>(null)
 
   const toggleDropdown = (name: string) => {
     setOpenDropdown(openDropdown === name ? null : name)
+  }
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+        setOpenDropdown(null)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isOpen])
+
+  // Close mobile menu when a link is clicked
+  const handleLinkClick = () => {
+    setIsOpen(false)
+    setOpenDropdown(null)
   }
 
   return (
@@ -33,7 +56,7 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation - Unchanged */}
           <div className="hidden md:flex items-center gap-8">
             <Link
               href="/"
@@ -53,34 +76,19 @@ export function Navbar() {
                 animate={{ opacity: 1, y: 0 }}
                 className="absolute left-0 top-full w-52 bg-white border border-border rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
               >
-                <Link
-                  href="/news"
-                  className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors first:rounded-t-xl"
-                >
+                <Link href="/news" className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors first:rounded-t-xl">
                   News & Updates
                 </Link>
-                <Link
-                  href="/events"
-                  className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors"
-                >
+                <Link href="/events" className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors">
                   Events & Calendar
                 </Link>
-                <Link
-                  href="/gallery"
-                  className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors"
-                >
+                <Link href="/gallery" className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors">
                   Gallery
                 </Link>
-                <Link
-                  href="/amenities"
-                  className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors"
-                >
+                <Link href="/amenities" className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors">
                   Amenities
                 </Link>
-                <Link
-                  href="/meeting-minutes"
-                  className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors last:rounded-b-xl"
-                >
+                <Link href="/meeting-minutes" className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors last:rounded-b-xl">
                   Meeting Minutes
                 </Link>
               </motion.div>
@@ -97,23 +105,14 @@ export function Navbar() {
                 animate={{ opacity: 1, y: 0 }}
                 className="absolute left-0 top-full w-52 bg-white border border-border rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
               >
-                <Link
-                  href="/documents"
-                  className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors first:rounded-t-xl"
-                >
+                <Link href="/documents" className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors first:rounded-t-xl">
                   Documents
                 </Link>
-                <Link
-                  href="/contacts"
-                  className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors"
-                >
+                <Link href="/contacts" className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors">
                   Contacts
                 </Link>
                 
-                <Link
-                  href="/faqs"
-                  className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors last:rounded-b-xl"
-                >
+                <Link href="/faqs" className="block px-5 py-3 text-foreground hover:bg-muted hover:text-primary transition-colors last:rounded-b-xl">
                   FAQs
                 </Link>
               </motion.div>
@@ -130,70 +129,48 @@ export function Navbar() {
             </a>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Hamburger */}
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden p-2 hover:bg-muted rounded-lg"
           >
-            {isOpen ? (
-              <X className="w-6 h-6" />
-            ) : (
-              <Menu className="w-6 h-6" />
-            )}
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
 
         {/* Mobile Navigation */}
         {isOpen && (
           <motion.div
+            ref={mobileMenuRef}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden pb-4 border-t border-border"
+            className="md:hidden pb-6 border-t border-border bg-white"
           >
-            <Link
-              href="/"
-              className="block px-4 py-2 text-foreground hover:text-primary hover:bg-muted transition-colors rounded"
-            >
+            <Link href="/" onClick={handleLinkClick} className="block px-4 py-3 text-foreground hover:bg-muted transition-colors">
               Home
             </Link>
 
             {/* Mobile Community Pages */}
             <button
               onClick={() => toggleDropdown('community')}
-              className="w-full text-left px-4 py-2 text-foreground hover:text-primary hover:bg-muted transition-colors rounded flex items-center justify-between"
+              className="w-full text-left px-4 py-3 text-foreground hover:bg-muted transition-colors flex items-center justify-between"
             >
               Community Pages
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${
-                  openDropdown === 'community' ? 'rotate-180' : ''
-                }`}
-              />
+              <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'community' ? 'rotate-180' : ''}`} />
             </button>
             {openDropdown === 'community' && (
-              <div className="pl-4">
-                <Link
-                  href="/news"
-                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors rounded"
-                >
+              <div className="pl-8 space-y-1">
+                <Link href="/news" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
                   News & Updates
                 </Link>
-                <Link
-                  href="/events"
-                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors rounded"
-                >
+                <Link href="/events" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
                   Events & Calendar
                 </Link>
-                <Link
-                  href="/gallery"
-                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors rounded"
-                >
+                <Link href="/gallery" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
                   Photo Gallery
                 </Link>
-                <Link
-                  href="/amenities"
-                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors rounded"
-                >
+                <Link href="/amenities" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
                   Amenities
                 </Link>
               </div>
@@ -202,39 +179,21 @@ export function Navbar() {
             {/* Mobile For Residents */}
             <button
               onClick={() => toggleDropdown('residents')}
-              className="w-full text-left px-4 py-2 text-foreground hover:text-primary hover:bg-muted transition-colors rounded flex items-center justify-between"
+              className="w-full text-left px-4 py-3 text-foreground hover:bg-muted transition-colors flex items-center justify-between"
             >
               For Residents
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${
-                  openDropdown === 'residents' ? 'rotate-180' : ''
-                }`}
-              />
+              <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'residents' ? 'rotate-180' : ''}`} />
             </button>
             {openDropdown === 'residents' && (
-              <div className="pl-4">
-                <Link
-                  href="/documents"
-                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors rounded"
-                >
+              <div className="pl-8 space-y-1">
+                <Link href="/documents" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
                   Documents & Forms
                 </Link>
-                <Link
-                  href="/contacts"
-                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors rounded"
-                >
+                <Link href="/contacts" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
                   Contacts
                 </Link>
-                <Link
-                  href="/reservations"
-                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors rounded"
-                >
-                  Reservations
-                </Link>
-                <Link
-                  href="/faqs"
-                  className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-muted transition-colors rounded"
-                >
+                 
+                <Link href="/faqs" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
                   FAQs
                 </Link>
               </div>
@@ -242,8 +201,9 @@ export function Navbar() {
 
             {/* Mobile CTA */}
             <a
-              href="https://payments.example.com"
-              className="block mx-4 mt-4 bg-accent text-accent-foreground px-4 py-2 rounded-lg text-center hover:opacity-90 transition-opacity font-medium"
+              href="https://cai.vantaca.com/"
+              onClick={handleLinkClick}
+              className="block mx-4 mt-4 bg-accent text-accent-foreground px-4 py-3 rounded-lg text-center hover:opacity-90 transition-opacity font-medium"
             >
               Make a Payment
             </a>

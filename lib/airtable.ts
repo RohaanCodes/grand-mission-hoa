@@ -233,7 +233,8 @@ export async function getAllDocuments(): Promise<Document[]> {
   }
 }
 
-// Events
+// ==================== EVENTS ====================
+
 export async function getAllEvents(): Promise<Event[]> {
   try {
     if (!base) {
@@ -244,7 +245,14 @@ export async function getAllEvents(): Promise<Event[]> {
     const records = await base('Events')
       .select({
         sort: [{ field: 'Event Date', direction: 'asc' }],
-        fields: ['Event Name', 'Event Date', 'End Date', 'Description', 'Location', 'Status', 'Banner Image']
+        fields: [
+          'Event Name', 'Event Date', 'End Date', 'Description', 'Location', 
+          'Status', 'Banner Image', 'Event Category',
+          'Tier 1 Name', 'Tier 1 Price', 'Tier 1 Benefits',
+          'Tier 2 Name', 'Tier 2 Price', 'Tier 2 Benefits',
+          'Tier 3 Name', 'Tier 3 Price', 'Tier 3 Benefits',
+          'Sponsor Application Link'
+        ]
       })
       .all();
 
@@ -259,6 +267,17 @@ export async function getAllEvents(): Promise<Event[]> {
       Location: record.get('Location') as string | undefined,
       Status: record.get('Status') as string | undefined,
       'Banner Image': record.get('Banner Image') as string[] | undefined,
+      'Event Category': record.get('Event Category') as string | undefined,
+      'Tier 1 Name': record.get('Tier 1 Name') as string | undefined,
+      'Tier 1 Price': record.get('Tier 1 Price') as number | undefined,
+      'Tier 1 Benefits': record.get('Tier 1 Benefits') as string | undefined,
+      'Tier 2 Name': record.get('Tier 2 Name') as string | undefined,
+      'Tier 2 Price': record.get('Tier 2 Price') as number | undefined,
+      'Tier 2 Benefits': record.get('Tier 2 Benefits') as string | undefined,
+      'Tier 3 Name': record.get('Tier 3 Name') as string | undefined,
+      'Tier 3 Price': record.get('Tier 3 Price') as number | undefined,
+      'Tier 3 Benefits': record.get('Tier 3 Benefits') as string | undefined,
+      'Sponsor Application Link': record.get('Sponsor Application Link') as string | undefined,
     }));
   } catch (error: any) {
     console.error('❌ Error fetching events:', error.message);
@@ -277,9 +296,18 @@ export async function getUpcomingEvents(limit: number = 5): Promise<Event[]> {
         filterByFormula: `{Event Date} >= '${today}'`,
         sort: [{ field: 'Event Date', direction: 'asc' }],
         maxRecords: limit,
-        fields: ['Event Name', 'Event Date', 'End Date', 'Description', 'Location', 'Status', 'Banner Image']
+        fields: [
+          'Event Name', 'Event Date', 'End Date', 'Description', 'Location', 
+          'Status', 'Banner Image', 'Event Category',
+          'Tier 1 Name', 'Tier 1 Price', 'Tier 1 Benefits',
+          'Tier 2 Name', 'Tier 2 Price', 'Tier 2 Benefits',
+          'Tier 3 Name', 'Tier 3 Price', 'Tier 3 Benefits',
+          'Sponsor Application Link'
+        ]
       })
       .all();
+
+    console.log(`✅ Found ${records.length} upcoming events`);
 
     return records.map((record) => ({
       id: record.id,
@@ -290,6 +318,17 @@ export async function getUpcomingEvents(limit: number = 5): Promise<Event[]> {
       Location: record.get('Location') as string | undefined,
       Status: record.get('Status') as string | undefined,
       'Banner Image': record.get('Banner Image') as string[] | undefined,
+      'Event Category': record.get('Event Category') as string | undefined,
+      'Tier 1 Name': record.get('Tier 1 Name') as string | undefined,
+      'Tier 1 Price': record.get('Tier 1 Price') as number | undefined,
+      'Tier 1 Benefits': record.get('Tier 1 Benefits') as string | undefined,
+      'Tier 2 Name': record.get('Tier 2 Name') as string | undefined,
+      'Tier 2 Price': record.get('Tier 2 Price') as number | undefined,
+      'Tier 2 Benefits': record.get('Tier 2 Benefits') as string | undefined,
+      'Tier 3 Name': record.get('Tier 3 Name') as string | undefined,
+      'Tier 3 Price': record.get('Tier 3 Price') as number | undefined,
+      'Tier 3 Benefits': record.get('Tier 3 Benefits') as string | undefined,
+      'Sponsor Application Link': record.get('Sponsor Application Link') as string | undefined,
     }));
   } catch (error: any) {
     console.error('❌ Error fetching upcoming events:', error.message);
@@ -297,26 +336,29 @@ export async function getUpcomingEvents(limit: number = 5): Promise<Event[]> {
   }
 }
 
-// Get single event by slug (Improved matching)
 export async function getEventBySlug(slug: string): Promise<Event | null> {
   try {
     if (!base) return null;
 
-    // Try multiple matching strategies
     const records = await base('Events')
       .select({
-        fields: ['Event Name', 'Event Date', 'End Date', 'Description', 'Location', 'Status', 'Banner Image']
+        fields: [
+          'Event Name', 'Event Date', 'End Date', 'Description', 'Location', 
+          'Status', 'Banner Image', 'Event Category',
+          'Tier 1 Name', 'Tier 1 Price', 'Tier 1 Benefits',
+          'Tier 2 Name', 'Tier 2 Price', 'Tier 2 Benefits',
+          'Tier 3 Name', 'Tier 3 Price', 'Tier 3 Benefits',
+          'Sponsor Application Link'
+        ]
       })
       .all();
 
-    // Find matching record
     const matchedRecord = records.find(record => {
       const eventName = (record.get('Event Name') as string || '').trim();
       const generatedSlug = eventName
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
-
       return generatedSlug === slug;
     });
 
@@ -332,6 +374,17 @@ export async function getEventBySlug(slug: string): Promise<Event | null> {
       Location: record.get('Location') as string | undefined,
       Status: record.get('Status') as string | undefined,
       'Banner Image': record.get('Banner Image') as string[] | undefined,
+      'Event Category': record.get('Event Category') as string | undefined,
+      'Tier 1 Name': record.get('Tier 1 Name') as string | undefined,
+      'Tier 1 Price': record.get('Tier 1 Price') as number | undefined,
+      'Tier 1 Benefits': record.get('Tier 1 Benefits') as string | undefined,
+      'Tier 2 Name': record.get('Tier 2 Name') as string | undefined,
+      'Tier 2 Price': record.get('Tier 2 Price') as number | undefined,
+      'Tier 2 Benefits': record.get('Tier 2 Benefits') as string | undefined,
+      'Tier 3 Name': record.get('Tier 3 Name') as string | undefined,
+      'Tier 3 Price': record.get('Tier 3 Price') as number | undefined,
+      'Tier 3 Benefits': record.get('Tier 3 Benefits') as string | undefined,
+      'Sponsor Application Link': record.get('Sponsor Application Link') as string | undefined,
     };
   } catch (error: any) {
     console.error('❌ Error fetching event by slug:', error.message);

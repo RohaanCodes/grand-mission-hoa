@@ -71,25 +71,19 @@ export default function NewsDetailPage() {
     )
   }
 
-  // Get image from attachment field
   const imageUrl = article.image && article.image.length > 0 ? article.image[0].url : null
 
   return (
     <main className="min-h-screen">
       {/* Back Button */}
       <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Glassmorphism Back Button */}
-   <Link
-    href="/news"
-    className="inline-flex items-center gap-2 px-6 py-3 
-               bg-white border-2 border-border 
-               hover:bg-primary hover:text-white hover:border-primary 
-               rounded-xl text-foreground font-medium 
-               transition-all duration-300 shadow-sm hover:shadow-md"
-  >
-    <ArrowLeft className="w-4 h-4" />
-    Back to News
-  </Link>
+        <Link
+          href="/news"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-border hover:bg-primary hover:text-white hover:border-primary rounded-xl text-foreground font-medium transition-all duration-300 shadow-sm hover:shadow-md"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to News
+        </Link>
       </div>
 
       {/* Article Content */}
@@ -98,7 +92,7 @@ export default function NewsDetailPage() {
         animate={{ opacity: 1 }}
         className="max-w-4xl mx-auto px-4 py-8"
       >
-        {/* Hero Image with Placeholder */}
+        {/* Hero Image */}
         <div className="rounded-lg overflow-hidden mb-8 h-[400px] bg-muted">
           {imageUrl ? (
             <img
@@ -110,7 +104,6 @@ export default function NewsDetailPage() {
             <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-7xl mb-4 opacity-40">📰</div>
-                 
               </div>
             </div>
           )}
@@ -137,9 +130,9 @@ export default function NewsDetailPage() {
           {article.excerpt}
         </p>
 
-        {/* Content */}
+        {/* Content - Justified + Respects Line Breaks */}
         <div className="prose prose-lg max-w-none mb-12">
-          <div className="text-lg leading-relaxed text-foreground whitespace-pre-wrap">
+          <div className="text-lg leading-relaxed text-foreground text-justify whitespace-pre-line">
             {article.content}
           </div>
         </div>

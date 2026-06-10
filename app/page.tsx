@@ -254,7 +254,7 @@ export default function Home() {
         </section>
       )}
 
-             {/* Upcoming Events Section */}
+                  {/* Upcoming Events Section */}
       {!error && events.length > 0 && (
         <section className="py-20 px-4 md:px-8 bg-white">
           <div className="max-w-7xl mx-auto">
@@ -273,12 +273,14 @@ export default function Home() {
               </p>
             </motion.div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               {events.map((event, i) => {
                 const slug = event['Event Name']
                   .toLowerCase()
                   .replace(/[^a-z0-9]+/g, '-')
                   .replace(/^-|-$/g, '');
+
+                const hasImage = event['Banner Image'] && event['Banner Image'].length > 0;
 
                 return (
                   <Link key={event.id} href={`/events/${slug}`} className="block group">
@@ -288,35 +290,58 @@ export default function Home() {
                       transition={{ delay: i * 0.1 }}
                       viewport={{ once: true }}
                       whileHover={{ y: -4 }}
-                      className="p-6 bg-white border border-border rounded-xl hover:shadow-2xl hover:border-primary/30 transition-all duration-300 group-hover:scale-[1.01]"
+                      className="grid md:grid-cols-12 gap-6 bg-white border border-border rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 group"
                     >
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 text-accent">
-                          <Calendar className="w-6 h-6" />
-                        </div>
-                        <div className="flex-grow">
-                          <h3 className="font-semibold text-foreground text-lg mb-1 group-hover:text-primary transition-colors">
-                            {event['Event Name']}
-                          </h3>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {event['Event Date']
-                              ? new Date(event['Event Date']).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric',
-                                })
-                              : 'Date TBD'}
-                          </p>
-                          {event.Description && (
-                            <p className="text-muted-foreground line-clamp-2 mb-4">
-                              {event.Description}
-                            </p>
-                          )}
-
-                          <div className="inline-flex items-center gap-2 text-primary font-semibold text-sm group-hover:gap-3 transition-all">
-                            View Details
-                            <ArrowRight className="w-4 h-4" />
+                      {/* Image - Right Side on Desktop */}
+                      <div className="md:col-span-5 lg:col-span-4 relative h-64 md:h-auto bg-muted">
+                        {hasImage ? (
+                          <img
+                            src={event['Banner Image'][0].url}
+                            alt={event['Event Name']}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-primary/5 to-accent/10 flex items-center justify-center">
+                            <Calendar className="w-20 h-20 text-primary/30" />
                           </div>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="md:col-span-7 lg:col-span-8 p-6 md:p-8 flex flex-col">
+                        <h3 className="font-semibold text-foreground text-2xl mb-3 group-hover:text-primary transition-colors">
+                          {event['Event Name']}
+                        </h3>
+
+                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4" />
+                            <span>
+                              {event['Event Date']
+                                ? new Date(event['Event Date']).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                  })
+                                : 'Date TBD'}
+                            </span>
+                          </div>
+                          {event.Location && (
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4" />
+                              <span>{event.Location}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {event.Description && (
+                          <p className="text-muted-foreground line-clamp-3 mb-6 flex-grow">
+                            {event.Description}
+                          </p>
+                        )}
+
+                        <div className="inline-flex items-center gap-2 text-primary font-semibold text-sm group-hover:gap-3 transition-all mt-auto">
+                          View Details →
                         </div>
                       </div>
                     </motion.div>
@@ -325,12 +350,13 @@ export default function Home() {
               })}
             </div>
 
+            {/* Bottom Buttons */}
             <motion.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
               viewport={{ once: true }}
-              className="text-center mt-10 flex flex-col sm:flex-row gap-4 justify-center"
+              className="text-center mt-12 flex flex-col sm:flex-row gap-4 justify-center"
             >
               <Link
                 href="/events"

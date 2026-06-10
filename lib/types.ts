@@ -43,7 +43,18 @@ export interface Event {
   Description: string
   Location?: string
   Status?: string
-  'Banner Image'?: string[]  // Attachment field returns array
+  'Banner Image'?: string[]
+  'Event Category'?: string
+  'Tier 1 Name'?: string
+  'Tier 1 Price'?: number
+  'Tier 1 Benefits'?: string
+  'Tier 2 Name'?: string
+  'Tier 2 Price'?: number
+  'Tier 2 Benefits'?: string
+  'Tier 3 Name'?: string
+  'Tier 3 Price'?: number
+  'Tier 3 Benefits'?: string
+  'Sponsor Application Link'?: string
 }
 
 export interface GalleryImage {
