@@ -8,6 +8,8 @@ import type {
   GalleryImage,
   Contact,
   MeetingMinutes,
+  Sponsor, 
+  AirtableAttachment         // ← Added
 } from './types'
 
 const apiKey = process.env.NEXT_PUBLIC_AIRTABLE_API_KEY
@@ -340,20 +342,17 @@ export async function getEventBySlug(slug: string): Promise<Event | null> {
   try {
     if (!base) return null;
 
-    const records = await base('Events')
+    // Fetch the main event
+    const eventRecords = await base('Events')
       .select({
         fields: [
           'Event Name', 'Event Date', 'End Date', 'Description', 'Location', 
-          'Status', 'Banner Image', 'Event Category',
-          'Tier 1 Name', 'Tier 1 Price', 'Tier 1 Benefits',
-          'Tier 2 Name', 'Tier 2 Price', 'Tier 2 Benefits',
-          'Tier 3 Name', 'Tier 3 Price', 'Tier 3 Benefits',
-          'Sponsor Application Link'
+          'Status', 'Banner Image', 'Event Category', 'Sponsor Application Link'
         ]
       })
       .all();
 
-    const matchedRecord = records.find(record => {
+    const matchedRecord = eventRecords.find(record => {
       const eventName = (record.get('Event Name') as string || '').trim();
       const generatedSlug = eventName
         .toLowerCase()
@@ -365,7 +364,9 @@ export async function getEventBySlug(slug: string): Promise<Event | null> {
     if (!matchedRecord) return null;
 
     const record = matchedRecord;
-    return {
+    const eventName = (record.get('Event Name') as string || '').replace(/'/g, "\\'");
+
+    const event: Event = {
       id: record.id,
       'Event Name': record.get('Event Name') as string || '',
       'Event Date': record.get('Event Date') as string || '',
@@ -375,17 +376,46 @@ export async function getEventBySlug(slug: string): Promise<Event | null> {
       Status: record.get('Status') as string | undefined,
       'Banner Image': record.get('Banner Image') as string[] | undefined,
       'Event Category': record.get('Event Category') as string | undefined,
-      'Tier 1 Name': record.get('Tier 1 Name') as string | undefined,
-      'Tier 1 Price': record.get('Tier 1 Price') as number | undefined,
-      'Tier 1 Benefits': record.get('Tier 1 Benefits') as string | undefined,
-      'Tier 2 Name': record.get('Tier 2 Name') as string | undefined,
-      'Tier 2 Price': record.get('Tier 2 Price') as number | undefined,
-      'Tier 2 Benefits': record.get('Tier 2 Benefits') as string | undefined,
-      'Tier 3 Name': record.get('Tier 3 Name') as string | undefined,
-      'Tier 3 Price': record.get('Tier 3 Price') as number | undefined,
-      'Tier 3 Benefits': record.get('Tier 3 Benefits') as string | undefined,
       'Sponsor Application Link': record.get('Sponsor Application Link') as string | undefined,
+      sponsors: []
     };
+
+    // Fetch sponsors linked to THIS event only
+    try {
+      const sponsorRecords = await base('Sponsor Requests')
+  .select({
+    filterByFormula: `AND(FIND('${eventName}', ARRAYJOIN({Event})), {Payment Received} = 1)`,
+    fields: [
+      'Sponsor Name / Business',
+      'Brand Name',
+      'Contact Name',
+      'Contact Email',
+      'Contact Phone',
+      'Logo',
+      'Address',
+    ]
+  })
+  .all();
+
+event.sponsors = sponsorRecords.map((sr: any): Sponsor => ({
+  id: sr.id,
+  'Sponsor Name / Business': sr.get('Sponsor Name / Business') as string || '',
+  'Brand Name': sr.get('Brand Name') as string | undefined,
+  'Contact Name': sr.get('Contact Name') as string | undefined,
+  'Contact Email': sr.get('Contact Email') as string | undefined,
+  'Contact Phone': sr.get('Contact Phone') as string | undefined,
+  Logo: sr.get('Logo') as AirtableAttachment[] | undefined,
+  
+  'Payment Received': true,
+}));
+
+    } catch (sponsorError: any) {
+      console.warn('⚠️ Could not load sponsors for this event:', sponsorError.message);
+      event.sponsors = [];
+    }
+
+    return event;
+
   } catch (error: any) {
     console.error('❌ Error fetching event by slug:', error.message);
     return null;

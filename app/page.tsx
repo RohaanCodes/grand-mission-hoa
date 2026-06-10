@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Carousel } from '@/components/carousel'
 import {
   getAllNews,
   getAllAmenities,
@@ -88,87 +89,51 @@ export default function Home() {
         imageUrl="/images/hero-monument.jpg"
       />
 
-      {/* Community Showcase Section */}
-      <section className="py-20 px-4 md:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="font-serif text-4xl md:text-5xl font-bold text-primary mb-4">
-              Experience Grand Mission
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              A premier residential community with luxury amenities, architectural excellence, and a lifestyle designed for modern living.
-            </p>
-          </motion.div>
+      {/* ==================== BIG GALLERY CAROUSEL ==================== */}
+<section className="py-20 px-4 md:px-8 bg-white">
+  <div className="max-w-7xl mx-auto">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      viewport={{ once: true }}
+      className="text-center mb-12"
+    >
+      <h2 className="font-serif text-4xl md:text-5xl font-bold text-primary mb-4">
+        Experience Grand Mission
+      </h2>
+      <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+        Luxury living surrounded by world-class amenities and breathtaking architecture
+      </p>
+    </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <ImageCard
-              src="/images/asset1.png"
-              alt="Grand Mission Aerial View"
-              overlay
-              title="Resort-Style Living"
-              subtitle="Luxury homes surrounding premium amenities"
-            />
-            <ImageCard
-              src="/images/asset2.png"
-              alt="Community Amenities"
-              overlay
-              title="World-Class Amenities"
-              subtitle="Recreation, pools, and family facilities"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ImageCard
-              src="/images/asset3.png"
-              alt="Water Park Facilities"
-              overlay
-              title="Aquatic Excellence"
-              subtitle="State-of-the-art water park for all ages"
-            />
-            <ImageCard
-              src="/images/asset4.png"
-              alt="Community Homes"
-              overlay
-              title="Prestigious Homes"
-              subtitle="Elegant architecture in a lakeside setting"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Quick Stats Section */}
-      <section className="py-16 px-4 md:px-8 bg-gradient-to-r from-primary/5 to-secondary/5">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { number: '500+', label: 'Homes' },
-              { number: '45+', label: 'Amenities' },
-              { number: '24/7', label: 'Security' },
-              { number: '100%', label: 'Satisfaction' },
-            ].map((stat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                viewport={{ once: true }}
-                className="text-center"
-              >
-                <div className="font-serif text-3xl md:text-4xl font-bold text-primary mb-2">
-                  {stat.number}
-                </div>
-                <p className="text-muted-foreground">{stat.label}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+    {/* Smooth Gallery Carousel */}
+    <div className="relative overflow-hidden rounded-3xl">
+      <Carousel images={[
+        {
+          src: "/images/asset1.png",
+          title: "Resort-Style Living",
+          subtitle: "Luxury homes surrounding premium amenities"
+        },
+        {
+          src: "/images/asset2.png",
+          title: "World-Class Amenities",
+          subtitle: "Recreation, pools, and family facilities"
+        },
+        {
+          src: "/images/asset3.png",
+          title: "Aquatic Excellence",
+          subtitle: "State-of-the-art water park for all ages"
+        },
+        {
+          src: "/images/asset4.png",
+          title: "Prestigious Homes",
+          subtitle: "Elegant architecture in a lakeside setting"
+        },
+      ]} />
+    </div>
+  </div>
+</section>
 
       {/* News Section */}
       {!error && news.length > 0 && (

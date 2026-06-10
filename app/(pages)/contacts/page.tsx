@@ -38,6 +38,7 @@ export default function ContactsPage() {
       clubhouse: 'Clubhouse',
       management: 'Management',
       emergency: 'Emergency',
+      
     }
     return labels[type] || type
   }

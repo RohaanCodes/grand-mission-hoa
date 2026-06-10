@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import { getEventBySlug } from '@/lib/airtable'
 import { formatDate } from '@/lib/utils'
 import type { Event } from '@/lib/types'
-import { ArrowLeft, Calendar, MapPin, Clock } from 'lucide-react'
+import { ArrowLeft, Calendar, MapPin, Clock, Mail, Phone, MapPinIcon, Award, User } from 'lucide-react'
 
 export default function EventDetailPage() {
   const params = useParams()
@@ -46,47 +46,25 @@ export default function EventDetailPage() {
     )
   }
 
-  const tiers = [
-    { name: event['Tier 1 Name'], price: event['Tier 1 Price'], benefits: event['Tier 1 Benefits'] },
-    { name: event['Tier 2 Name'], price: event['Tier 2 Price'], benefits: event['Tier 2 Benefits'] },
-    { name: event['Tier 3 Name'], price: event['Tier 3 Price'], benefits: event['Tier 3 Benefits'] },
-  ].filter(t => t.name && t.price);
-
   return (
     <main className="min-h-screen">
       {/* Back Button */}
-<div className="max-w-6xl mx-auto px-4 py-6">
-  <Link
-    href="/events"
-    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 group"
-    style={{
-      background: "rgba(255, 255, 255, 0.12)",
-      backdropFilter: "blur(12px)",
-      WebkitBackdropFilter: "blur(12px)",
-      border: "1px solid rgba(255, 255, 255, 0.25)",
-      color: "#1A3A52",
-      boxShadow: "0 4px 16px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
-    }}
-    onMouseEnter={e => {
-      e.currentTarget.style.background = "rgba(255, 255, 255, 0.22)";
-      e.currentTarget.style.boxShadow = "0 6px 24px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.25)";
-    }}
-    onMouseLeave={e => {
-      e.currentTarget.style.background = "rgba(255, 255, 255, 0.12)";
-      e.currentTarget.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2)";
-    }}
-  >
-    <span className="text-base leading-none transition-transform duration-300 group-hover:-translate-x-0.5" style={{ color: "#1A3A52" }}>&lt;</span>
-    Back to Events
-  </Link>
-</div>
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <Link
+          href="/events"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white border-2 border-border hover:bg-primary hover:text-white hover:border-primary rounded-xl text-foreground font-medium transition-all duration-300 shadow-sm hover:shadow-md"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Events
+        </Link>
+      </div>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-12 gap-10">
           
           {/* Left Column - Description */}
           <div className="lg:col-span-7">
-            {/* Image */}
+            {/* Banner Image */}
             {event['Banner Image'] && event['Banner Image'].length > 0 && (
               <div className="rounded-2xl overflow-hidden mb-10 h-[420px] bg-muted">
                 <img
@@ -99,7 +77,7 @@ export default function EventDetailPage() {
 
             {/* Title & Meta */}
             <div className="mb-8">
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+              <h1 className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-4">
                 {event['Event Name']}
               </h1>
               <div className="flex flex-wrap gap-6 text-muted-foreground">
@@ -130,72 +108,140 @@ export default function EventDetailPage() {
             {/* Description */}
             {event.Description && (
               <div className="prose prose-lg max-w-none">
-                <p className="text-lg leading-relaxed text-foreground">
+                <p className="font-sans text-lg leading-relaxed text-foreground text-justify whitespace-pre-line">
                   {event.Description}
                 </p>
               </div>
             )}
           </div>
 
-          {/* Right Column - Sponsorship Tiers */}
+          {/* Right Column - Sponsors */}
           <div className="lg:col-span-5">
             <div className="sticky top-24">
-              <h2 className="font-serif text-3xl font-bold mb-8">Sponsorship Opportunities</h2>
-
-              {tiers.length > 0 ? (
-                <div className="space-y-6">
-                  {tiers.map((tier, index) => {
-                    const tierLevel = index + 1; // 1 = cheapest, 3 = most expensive
-                    
-                    return (
-                      <div 
-                        key={index} 
-                        className={`border-2 rounded-2xl p-7 bg-white transition-all hover:shadow-xl ${
-                          tierLevel === 1 
-                            ? 'border-slate-200 hover:border-slate-400'           // Tier 1 - Basic
-                            : tierLevel === 2 
-                            ? 'border-primary/30 hover:border-primary'            // Tier 2 - Standard
-                            : 'border-amber-500/30 hover:border-amber-500'        // Tier 3 - Premium
-                        }`}
-                      >
-                        <div className={`inline-block px-4 py-1 rounded-full text-sm font-semibold mb-4 ${
-                          tierLevel === 1 
-                            ? 'bg-slate-100 text-slate-600' 
-                            : tierLevel === 2 
-                            ? 'bg-primary/10 text-primary' 
-                            : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          {tier.name}
-                        </div>
-                        
-                        <p className="text-4xl font-bold text-foreground mb-5">
-                          ${tier.price}
-                        </p>
-
-                        {tier.benefits && (
-                          <div className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                            {tier.benefits}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+              {/* Sponsors Header */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-2">
+                  <Award className="w-6 h-6 text-accent" />
+                  <h2 className="font-serif text-3xl font-bold text-primary">
+                    Proud Sponsors
+                  </h2>
                 </div>
-              ) : (
-                <p className="text-muted-foreground">No sponsorship tiers available for this event.</p>
-              )}
+                <p className="font-sans text-sm text-muted-foreground pl-9">
+                  Supporting our community
+                </p>
+              </div>
 
-              {/* Sponsor Application Button */}
-              {event['Sponsor Application Link'] && (
-                <div className="mt-8">
-                  <a
-                    href={event['Sponsor Application Link']}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-full text-center bg-primary text-white py-4 rounded-xl hover:bg-primary/90 transition-all font-semibold text-lg"
-                  >
-                    Apply to Sponsor This Event
-                  </a>
+              {/* Sponsors List */}
+              {event.sponsors && event.sponsors.length > 0 ? (
+                <motion.div 
+                  className="space-y-5"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ staggerChildren: 0.1 }}
+                >
+                  {event.sponsors.map((sponsor, index) => {
+                    const displayName = sponsor['Brand Name'] || sponsor['Sponsor Name / Business']
+                    const subName = sponsor['Brand Name'] && sponsor['Brand Name'] !== sponsor['Sponsor Name / Business'] 
+                      ? sponsor['Sponsor Name / Business'] 
+                      : null
+                    const logoUrl = sponsor.Logo && sponsor.Logo.length > 0 ? sponsor.Logo[0].url : null
+
+                    return (
+                      <motion.div
+                        key={sponsor.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="group bg-white border border-border rounded-xl overflow-hidden hover:shadow-lg hover:border-primary/30 transition-all duration-300"
+                      >
+                        {/* Sponsor Card - Two Column Layout */}
+                        <div className="grid grid-cols-5 gap-0">
+                          {/* Left - Logo Image (40% width) */}
+                          <div className="col-span-2 bg-muted overflow-hidden min-h-[280px]">
+                            {logoUrl ? (
+                              <img
+                                src={logoUrl}
+                                alt={displayName}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
+                                <Award className="w-16 h-16 text-muted-foreground/30 mb-2" />
+                                <span className="text-xs text-muted-foreground/50 text-center px-2">Brand Logo</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right - Content Section (60% width) */}
+                          <div className="col-span-3 p-5 flex flex-col justify-between">
+                            {/* Name & Badge */}
+                            <div>
+                              <h3 className="font-serif font-bold text-lg leading-snug text-foreground group-hover:text-primary transition-colors">
+                                {displayName}
+                              </h3>
+                              {subName && (
+                                <p className="font-sans text-xs text-muted-foreground mt-1">
+                                  {subName}
+                                </p>
+                              )}
+                              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full mt-3">
+                                <span className="w-1.5 h-1.5 bg-emerald-600 rounded-full" />
+                                Sponsor
+                              </span>
+                            </div>
+
+                            {/* Contact Information */}
+                            {(sponsor['Contact Name'] || sponsor['Contact Email'] || sponsor['Contact Phone'] || sponsor['Address']) && (
+                              <div className="space-y-2.5 text-sm pt-4 border-t border-border/50 mt-4">
+                                {sponsor['Contact Name'] && (
+                                  <div className="flex items-center gap-2.5 font-sans text-foreground">
+                                    <User className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <span className="text-sm">{sponsor['Contact Name']}</span>
+                                  </div>
+                                )}
+                                {sponsor['Contact Email'] && (
+                                  <div className="flex items-center gap-2.5">
+                                    <Mail className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <a 
+                                      href={`mailto:${sponsor['Contact Email']}`} 
+                                      className="font-sans text-muted-foreground hover:text-primary hover:underline truncate text-xs"
+                                    >
+                                      {sponsor['Contact Email']}
+                                    </a>
+                                  </div>
+                                )}
+                                {sponsor['Contact Phone'] && (
+                                  <div className="flex items-center gap-2.5">
+                                    <Phone className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <a 
+                                      href={`tel:${sponsor['Contact Phone']}`} 
+                                      className="font-sans text-muted-foreground hover:text-primary hover:underline text-xs"
+                                    >
+                                      {sponsor['Contact Phone']}
+                                    </a>
+                                  </div>
+                                )}
+                                {sponsor['Address'] && (
+                                  <div className="flex items-start gap-2.5">
+                                    <MapPinIcon className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5 flex-shrink-0" />
+                                    <span className="font-sans text-muted-foreground text-xs leading-snug">
+                                      {sponsor['Address']}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
+                </motion.div>
+              ) : (
+                <div className="bg-gradient-to-br from-primary/5 to-accent/5 border border-border rounded-xl p-10 text-center">
+                  <p className="font-sans text-muted-foreground text-sm leading-relaxed">
+                    No sponsors yet for this event.
+                  </p>
                 </div>
               )}
             </div>

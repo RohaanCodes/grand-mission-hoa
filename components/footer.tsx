@@ -92,21 +92,23 @@ export function Footer() {
               <li className="flex gap-3 items-start">
                 <MapPin className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
                 <span className="text-white/80 text-sm">
-                  Grand Mission Clubhouse
+                  Grand Mission HOA
                   <br />
-                  [Address will be updated]
+                  7302 Grand Mission Blvd, Richmond, TX 77407
+
                 </span>
               </li>
               <li className="flex gap-3 items-start">
                 <Phone className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
                 <span className="text-white/80 text-sm">
-                  (555) 000-0000
+                  (O) 281-232-6621 | 
+                  (M) 281-772-4655
                 </span>
               </li>
               <li className="flex gap-3 items-start">
                 <Mail className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
                 <span className="text-white/80 text-sm">
-                  info@grandmission.com
+                   www.inframark.com/community-management
                 </span>
               </li>
             </ul>

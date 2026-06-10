@@ -35,6 +35,26 @@ export interface Document {
   updated_date?: string
 }
 
+
+export interface AirtableAttachment {
+  id: string
+  url: string
+  filename: string
+  width?: number
+  height?: number
+}
+
+export interface Sponsor {
+  id: string
+  'Sponsor Name / Business': string
+  'Brand Name'?: string
+  'Contact Name'?: string
+  'Contact Email'?: string
+  'Contact Phone'?: string
+  Logo?: AirtableAttachment[]
+  'Payment Received': boolean
+}
+// Updated Event interface
 export interface Event {
   id: string
   'Event Name': string
@@ -45,16 +65,8 @@ export interface Event {
   Status?: string
   'Banner Image'?: string[]
   'Event Category'?: string
-  'Tier 1 Name'?: string
-  'Tier 1 Price'?: number
-  'Tier 1 Benefits'?: string
-  'Tier 2 Name'?: string
-  'Tier 2 Price'?: number
-  'Tier 2 Benefits'?: string
-  'Tier 3 Name'?: string
-  'Tier 3 Price'?: number
-  'Tier 3 Benefits'?: string
   'Sponsor Application Link'?: string
+  sponsors?: Sponsor[]
 }
 
 export interface GalleryImage {
