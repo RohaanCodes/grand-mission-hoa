@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Menu, X, ChevronDown } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
@@ -42,7 +42,7 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-2 group min-h-[44px] py-1">
             <Image
               src="/images/logo.png"
               alt="Grand Mission Logo"
@@ -129,87 +129,124 @@ export function Navbar() {
             </a>
           </div>
 
-          {/* Mobile Hamburger */}
+          {/* Mobile Hamburger - Optimized size and tap target */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 hover:bg-muted rounded-lg"
+            className="md:hidden p-2.5 -m-2.5 hover:bg-muted/80 active:bg-muted/90 rounded-full transition-colors flex items-center justify-center min-w-[44px] min-h-[44px]"
+            aria-label="Toggle Menu"
           >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isOpen ? <X className="w-6 h-6 text-foreground" /> : <Menu className="w-6 h-6 text-foreground" />}
           </button>
         </div>
 
         {/* Mobile Navigation */}
-        {isOpen && (
-          <motion.div
-            ref={mobileMenuRef}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden pb-6 border-t border-border bg-white"
-          >
-            <Link href="/" onClick={handleLinkClick} className="block px-4 py-3 text-foreground hover:bg-muted transition-colors">
-              Home
-            </Link>
-
-            {/* Mobile Community Pages */}
-            <button
-              onClick={() => toggleDropdown('community')}
-              className="w-full text-left px-4 py-3 text-foreground hover:bg-muted transition-colors flex items-center justify-between"
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              ref={mobileMenuRef}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="md:hidden pb-6 border-t border-border bg-white overflow-hidden max-h-[calc(100vh-4rem)] overflow-y-auto"
             >
-              Community Pages
-              <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'community' ? 'rotate-180' : ''}`} />
-            </button>
-            {openDropdown === 'community' && (
-              <div className="pl-8 space-y-1">
-                <Link href="/news" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
-                  News & Updates
+              <div className="space-y-1 pt-2">
+                <Link 
+                  href="/" 
+                  onClick={handleLinkClick} 
+                  className="block px-4 py-3.5 text-base font-semibold text-foreground hover:bg-neutral-50 active:bg-neutral-100 transition-colors rounded-lg mx-2"
+                >
+                  Home
                 </Link>
-                <Link href="/events" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
-                  Events & Calendar
-                </Link>
-                <Link href="/gallery" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
-                  Photo Gallery
-                </Link>
-                <Link href="/amenities" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
-                  Amenities
-                </Link>
+
+                {/* Mobile Community Pages */}
+                <div className="mx-2">
+                  <button
+                    onClick={() => toggleDropdown('community')}
+                    className="w-full text-left px-4 py-3.5 text-base font-semibold text-foreground hover:bg-neutral-50 active:bg-neutral-100 transition-colors flex items-center justify-between rounded-lg"
+                  >
+                    <span>Community Pages</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-250 ${openDropdown === 'community' ? 'rotate-180 text-primary' : 'text-neutral-500'}`} />
+                  </button>
+                  
+                  <AnimatePresence>
+                    {openDropdown === 'community' && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="pl-4 pr-2 mt-1 mb-2 border-l-2 border-neutral-100 ml-4 space-y-0.5 overflow-hidden"
+                      >
+                        <Link href="/news" onClick={handleLinkClick} className="block px-4 py-3 text-base text-muted-foreground hover:text-primary hover:bg-neutral-50/50 rounded-md transition-colors">
+                          News & Updates
+                        </Link>
+                        <Link href="/events" onClick={handleLinkClick} className="block px-4 py-3 text-base text-muted-foreground hover:text-primary hover:bg-neutral-50/50 rounded-md transition-colors">
+                          Events & Calendar
+                        </Link>
+                        <Link href="/gallery" onClick={handleLinkClick} className="block px-4 py-3 text-base text-muted-foreground hover:text-primary hover:bg-neutral-50/50 rounded-md transition-colors">
+                          Gallery
+                        </Link>
+                        <Link href="/amenities" onClick={handleLinkClick} className="block px-4 py-3 text-base text-muted-foreground hover:text-primary hover:bg-neutral-50/50 rounded-md transition-colors">
+                          Amenities
+                        </Link>
+                        <Link href="/meeting-minutes" onClick={handleLinkClick} className="block px-4 py-3 text-base text-muted-foreground hover:text-primary hover:bg-neutral-50/50 rounded-md transition-colors">
+                          Meeting Minutes
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Mobile For Residents */}
+                <div className="mx-2">
+                  <button
+                    onClick={() => toggleDropdown('residents')}
+                    className="w-full text-left px-4 py-3.5 text-base font-semibold text-foreground hover:bg-neutral-50 active:bg-neutral-100 transition-colors flex items-center justify-between rounded-lg"
+                  >
+                    <span>For Residents</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-250 ${openDropdown === 'residents' ? 'rotate-180 text-primary' : 'text-neutral-500'}`} />
+                  </button>
+                  
+                  <AnimatePresence>
+                    {openDropdown === 'residents' && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="pl-4 pr-2 mt-1 mb-2 border-l-2 border-neutral-100 ml-4 space-y-0.5 overflow-hidden"
+                      >
+                        <Link href="/documents" onClick={handleLinkClick} className="block px-4 py-3 text-base text-muted-foreground hover:text-primary hover:bg-neutral-50/50 rounded-md transition-colors">
+                          Documents
+                        </Link>
+                        <Link href="/contacts" onClick={handleLinkClick} className="block px-4 py-3 text-base text-muted-foreground hover:text-primary hover:bg-neutral-50/50 rounded-md transition-colors">
+                          Contacts
+                        </Link>
+                        <Link href="/faqs" onClick={handleLinkClick} className="block px-4 py-3 text-base text-muted-foreground hover:text-primary hover:bg-neutral-50/50 rounded-md transition-colors">
+                          FAQs
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
-            )}
 
-            {/* Mobile For Residents */}
-            <button
-              onClick={() => toggleDropdown('residents')}
-              className="w-full text-left px-4 py-3 text-foreground hover:bg-muted transition-colors flex items-center justify-between"
-            >
-              For Residents
-              <ChevronDown className={`w-4 h-4 transition-transform ${openDropdown === 'residents' ? 'rotate-180' : ''}`} />
-            </button>
-            {openDropdown === 'residents' && (
-              <div className="pl-8 space-y-1">
-                <Link href="/documents" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
-                  Documents & Forms
-                </Link>
-                <Link href="/contacts" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
-                  Contacts
-                </Link>
-                 
-                <Link href="/faqs" onClick={handleLinkClick} className="block py-2 text-sm text-muted-foreground hover:text-primary">
-                  FAQs
-                </Link>
+              {/* Mobile CTA - Full width screen margins with great target height */}
+              <div className="px-4 mt-5">
+                <a
+                  href="https://cai.vantaca.com/"
+                  onClick={handleLinkClick}
+                  className="block w-full bg-accent text-accent-foreground px-4 py-3.5 rounded-xl text-center hover:opacity-90 active:scale-[0.98] transition-all font-bold tracking-wide shadow-sm min-h-[48px] flex items-center justify-center text-base"
+                >
+                  Make a Payment
+                </a>
               </div>
-            )}
-
-            {/* Mobile CTA */}
-            <a
-              href="https://cai.vantaca.com/"
-              onClick={handleLinkClick}
-              className="block mx-4 mt-4 bg-accent text-accent-foreground px-4 py-3 rounded-lg text-center hover:opacity-90 transition-opacity font-medium"
-            >
-              Make a Payment
-            </a>
-          </motion.div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </nav>
   )
 }
+export default Navbar;
