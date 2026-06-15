@@ -44,7 +44,7 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group min-h-[44px] py-1">
             <Image
-              src="/images/logo.png"
+              src="/images/logo-1.png"
               alt="Grand Mission Logo"
               width={40}
               height={40}
