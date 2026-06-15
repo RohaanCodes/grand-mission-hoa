@@ -92,7 +92,7 @@ export default function Home() {
       <HeroSection
         title={heroTitle}
         subtitle={heroSubtitle}
-        imageUrl="/images/hero-monument.png"
+        imageUrl="/images/GrandMission.jpeg"
       />
 
       {/* ==================== BIG GALLERY CAROUSEL ==================== */}
@@ -117,22 +117,22 @@ export default function Home() {
           <div className="relative overflow-hidden rounded-2xl md:rounded-3xl shadow-lg border border-slate-100">
             <Carousel images={[
               {
-                src: "/images/asset1.png",
+                src: "/images/asset1.jpeg",
                 title: "Resort-Style Living",
                 subtitle: "Luxury homes surrounding premium amenities"
               },
               {
-                src: "/images/asset2.png",
+                src: "/images/asset2.jpeg",
                 title: "World-Class Amenities",
                 subtitle: "Recreation, pools, and family facilities"
               },
               {
-                src: "/images/asset3.png",
+                src: "/images/asset3.jpeg",
                 title: "Aquatic Excellence",
                 subtitle: "State-of-the-art water park for all ages"
               },
               {
-                src: "/images/asset4.png",
+                src: "/images/asset4.jpeg",
                 title: "Prestigious Homes",
                 subtitle: "Elegant architecture in a lakeside setting"
               },
