@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import { getNewsBySlug } from '@/lib/airtable'
 import { formatDate } from '@/lib/utils'
 import type { News } from '@/lib/types'
-import { ArrowLeft, Calendar, User, Clock, Bookmark, Sparkles, Share2 } from 'lucide-react'
+import { ArrowLeft, Calendar, User, Clock, Bookmark, Sparkles, Share2, Link2 } from 'lucide-react'
 
 export default function NewsDetailPage() {
   const params = useParams()
@@ -16,6 +16,8 @@ export default function NewsDetailPage() {
   const [article, setArticle] = useState<News | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const [isBookmarked, setIsBookmarked] = useState(false)
+  const [isShared, setIsShared] = useState(false)
 
   useEffect(() => {
     if (!slug) return
@@ -183,21 +185,39 @@ export default function NewsDetailPage() {
 
             <div className="flex gap-2 w-full sm:w-auto">
               <button
-                onClick={() => alert('Article saved to your browser bookmarks folder!')}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-250/50 rounded-xl text-xs font-bold transition-all active:scale-98 min-h-[46px] cursor-pointer select-none"
+                onClick={() => setIsBookmarked(!isBookmarked)}
+                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-xs font-bold transition-all active:scale-98 min-h-[46px] cursor-pointer select-none ${
+                  isBookmarked
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/80'
+                }`}
               >
-                <Bookmark className="w-4 h-4 text-slate-450" />
-                Bookmark
+                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current text-white' : 'text-slate-450'}`} />
+                {isBookmarked ? 'Bookmarked' : 'Bookmark'}
               </button>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href);
-                  alert('Page link copied to clipboard!');
+                  setIsShared(true);
+                  setTimeout(() => setIsShared(false), 3000);
                 }}
-                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-250/50 rounded-xl text-xs font-bold transition-all active:scale-98 min-h-[46px] cursor-pointer select-none"
+                className={`flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-xl text-xs font-bold transition-all active:scale-98 min-h-[46px] cursor-pointer select-none ${
+                  isShared
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200/80'
+                }`}
               >
-                <Share2 className="w-4 h-4 text-slate-450" />
-                Share
+                {isShared ? (
+                  <>
+                    <Link2 className="w-4 h-4 text-white" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-4 h-4 text-slate-450" />
+                    Share
+                  </>
+                )}
               </button>
             </div>
           </div>
