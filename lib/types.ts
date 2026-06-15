@@ -53,6 +53,7 @@ export interface Sponsor {
   'Contact Phone'?: string
   Logo?: AirtableAttachment[]
   'Payment Received': boolean
+  'Address'?: string
 }
 // Updated Event interface
 export interface Event {
@@ -79,12 +80,18 @@ export interface GalleryImage {
 
 export interface Contact {
   id: string
-  type: 'clubhouse' | 'management' | 'emergency'
+  type: 'clubhouse' | 'management' | 'emergency' | 'utility' | 'vendor' | 'police' | 'general'
   name?: string
+  role?: string
   phone?: string
+  secondary_phone?: string      // New
+  after_hours_phone?: string    // New
   email?: string
   address?: string
   hours?: string
+  note?: string
+  website?: string
+  is_important?: boolean
 }
 
 export interface MeetingMinutes {

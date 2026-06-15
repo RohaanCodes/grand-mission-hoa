@@ -452,6 +452,7 @@ export async function getAllGalleryImages(): Promise<GalleryImage[]> {
   }
 }
 
+
 // Contacts
 export async function getAllContacts(): Promise<Contact[]> {
   try {
@@ -462,8 +463,21 @@ export async function getAllContacts(): Promise<Contact[]> {
 
     const records = await base('Contacts')
       .select({
-        sort: [{ field: 'type', direction: 'asc' }],
-        fields: ['type', 'name', 'role', 'phone', 'email', 'address', 'hours']
+        sort: [{ field: 'order', direction: 'asc' }, { field: 'type', direction: 'asc' }],
+        fields: [
+          'type', 
+          'name', 
+          'role', 
+          'phone', 
+          'secondary_phone',      // New
+          'after_hours_phone',    // New
+          'email', 
+          'address', 
+          'hours',
+          'note', 
+          'website', 
+          'is_important'
+        ]
       })
       .all();
 
@@ -471,13 +485,18 @@ export async function getAllContacts(): Promise<Contact[]> {
 
     return records.map((record) => ({
       id: record.id,
-      type: record.get('type') as 'clubhouse' | 'management' | 'emergency' || 'clubhouse',
+      type: record.get('type') as any || 'general',
       name: record.get('name') as string | undefined,
       role: record.get('role') as string | undefined,
       phone: record.get('phone') as string | undefined,
+      secondary_phone: record.get('secondary_phone') as string | undefined,
+      after_hours_phone: record.get('after_hours_phone') as string | undefined,
       email: record.get('email') as string | undefined,
       address: record.get('address') as string | undefined,
       hours: record.get('hours') as string | undefined,
+      note: record.get('note') as string | undefined,
+      website: record.get('website') as string | undefined,
+      is_important: record.get('is_important') as boolean | undefined,
     }));
   } catch (error: any) {
     console.error('❌ Error fetching contacts:', error.message);
