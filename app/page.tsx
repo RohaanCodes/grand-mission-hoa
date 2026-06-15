@@ -62,24 +62,29 @@ export default function Home() {
     setOpenFAQIndex(openFAQIndex === index ? null : index)
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="text-center w-full max-w-xs">
-          <motion.div 
-            animate={{ opacity: [0.5, 1, 0.5] }} 
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }} 
-            className="mb-5"
-          >
-            <div className="w-14 h-14 bg-primary rounded-full mx-auto shadow-md ring-4 ring-primary/10" />
-          </motion.div>
-          <p className="text-muted-foreground text-sm font-medium tracking-wide">
-            Loading community content...
-          </p>
-        </div>
+if (loading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="text-center w-full max-w-xs">
+        <motion.div
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+          className="mb-5"
+        >
+          <img
+            src="/images/logo-1.png"
+            alt="Loading"
+            className="w-14 h-14 mx-auto object-contain"
+          />
+        </motion.div>
+
+        <p className="text-muted-foreground text-sm font-medium tracking-wide">
+          Loading community content...
+        </p>
       </div>
-    )
-  }
+    </div>
+  )
+}
 
   const defaultTitle = 'Welcome to Grand Mission'
   const defaultSubtitle = 'An Upscale Community Featuring World-Class Amenities, Exceptional Architecture & Unparalleled Lifestyle'
