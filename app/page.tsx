@@ -72,7 +72,7 @@ if (loading) {
           className="mb-5"
         >
           <img
-            src="/images/logo-1.png"
+            src="/images/logo-1.jpeg"
             alt="Loading"
             className="w-14 h-14 mx-auto object-contain"
           />
