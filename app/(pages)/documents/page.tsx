@@ -35,7 +35,7 @@ export default function DocumentsPage() {
     const matchesCategory = selectedCategory === 'All' || doc.category === selectedCategory
     const matchesSearch = 
       doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.category.toLowerCase().includes(searchQuery.toLowerCase())
+      (doc.category && doc.category.toLowerCase().includes(searchQuery.toLowerCase()))
     return matchesCategory && matchesSearch
   })
 
@@ -150,45 +150,57 @@ export default function DocumentsPage() {
                     </span>
                   </div>
 
-                  {/* Document Resource Rows */}
+                  {/* Document Resource Rows - Updated for Attachment */}
                   <div className="grid grid-cols-1 gap-3">
-                    {groupedDocsByOriginalCategory[category].map((doc, idx) => (
-                      <motion.a
-                        key={doc.id}
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-between p-4 bg-white hover:bg-slate-50/50 border border-slate-150 rounded-xl hover:border-amber-300 active:scale-[0.99] transition-all group cursor-pointer shadow-2xs select-none touch-manipulation min-h-[44px]"
-                        title={`Download ${doc.title}`}
-                      >
-                        <div className="flex items-start gap-3.5 mr-4 overflow-hidden">
-                          <div className="p-2.5 bg-slate-50 text-amber-600 rounded-lg group-hover:bg-amber-50 group-hover:text-amber-700 transition-colors shrink-0">
-                            <FileText className="w-5 h-5 group-hover:scale-105 transition-transform" />
-                          </div>
-                          <div className="overflow-hidden">
-                            <h3 className="font-bold text-slate-850 text-sm sm:text-base leading-snug group-hover:text-amber-800 transition-colors">
-                              {doc.title}
-                            </h3>
-                            {doc.updated_date && (
-                              <div className="flex items-center gap-1.5 mt-1.5 text-slate-450 text-[11px] font-semibold">
-                                <Calendar className="w-3.5 h-3.5 shrink-0" />
-                                <span>Updated: {doc.updated_date}</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+                    {groupedDocsByOriginalCategory[category].map((doc) => {
+                      const attachment = doc.document && doc.document.length > 0 
+                        ? doc.document[0] 
+                        : null;
+                      const downloadUrl = attachment ? attachment.url : '#';
 
-                        {/* Elegant Download button indicators */}
-                        <div className="flex items-center gap-2.5 shrink-0 ml-2">
-                          <span className="hidden sm:inline-block text-xs font-bold text-slate-400 group-hover:text-amber-700 uppercase tracking-wider transition-colors">
-                            PDF
-                          </span>
-                          <div className="w-9 h-9 flex items-center justify-center bg-slate-50 group-hover:bg-amber-600 group-hover:text-white rounded-full text-slate-450 transition-all shadow-2xs border border-slate-100">
-                            <Download className="w-4 h-4" />
+                      return (
+                        <motion.a
+                          key={doc.id}
+                          href={downloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between p-4 bg-white hover:bg-slate-50/50 border border-slate-150 rounded-xl hover:border-amber-300 active:scale-[0.99] transition-all group cursor-pointer shadow-2xs select-none touch-manipulation min-h-[44px]"
+                          title={`Download ${doc.title}`}
+                        >
+                          <div className="flex items-start gap-3.5 mr-4 overflow-hidden">
+                            <div className="p-2.5 bg-slate-50 text-amber-600 rounded-lg group-hover:bg-amber-50 group-hover:text-amber-700 transition-colors shrink-0">
+                              <FileText className="w-5 h-5 group-hover:scale-105 transition-transform" />
+                            </div>
+                            <div className="overflow-hidden">
+                              <h3 className="font-bold text-slate-850 text-sm sm:text-base leading-snug group-hover:text-amber-800 transition-colors">
+                                {doc.title}
+                              </h3>
+                              {doc.updated_date && (
+                                <div className="flex items-center gap-1.5 mt-1.5 text-slate-450 text-[11px] font-semibold">
+                                  <Calendar className="w-3.5 h-3.5 shrink-0" />
+                                  <span>Updated: {doc.updated_date}</span>
+                                </div>
+                              )}
+                              {attachment && (
+                                <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                                  {attachment.filename}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </motion.a>
-                    ))}
+
+                          {/* Elegant Download button indicators */}
+                          <div className="flex items-center gap-2.5 shrink-0 ml-2">
+                            <span className="hidden sm:inline-block text-xs font-bold text-slate-400 group-hover:text-amber-700 uppercase tracking-wider transition-colors">
+                              DOWNLOAD
+                            </span>
+                            <div className="w-9 h-9 flex items-center justify-center bg-slate-50 group-hover:bg-amber-600 group-hover:text-white rounded-full text-slate-450 transition-all shadow-2xs border border-slate-100">
+                              <Download className="w-4 h-4" />
+                            </div>
+                          </div>
+                        </motion.a>
+                      );
+                    })}
                   </div>
                 </motion.div>
               ))}
@@ -203,7 +215,7 @@ export default function DocumentsPage() {
                   </div>
                 </div>
                 <a
-                  href="contact"
+                  href="/contacts"
                   className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-lg active:scale-98 transition-all shadow-xs min-h-[40px] select-none touch-manipulation"
                 >
                   Request Document

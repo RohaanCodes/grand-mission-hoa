@@ -30,7 +30,7 @@ export interface Amenity {
 export interface Document {
   id: string
   title: string
-  url: string
+  document?: AirtableAttachment[]  // ← Changed from url to attachment
   category?: string
   updated_date?: string
 }

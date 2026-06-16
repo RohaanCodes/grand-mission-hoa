@@ -197,40 +197,42 @@ export async function getAmenityBySlug(slug: string): Promise<Amenity | null> {
 }
 
 // Documents - DEBUG VERSION
+// Documents - Using Attachment Field
 export async function getAllDocuments(): Promise<Document[]> {
   try {
-    console.log('🔍 Airtable Config:', { 
-      hasApiKey: !!process.env.AIRTABLE_API_KEY, 
-      hasBaseId: !!process.env.AIRTABLE_BASE_ID 
-    });
-
     if (!base) {
-      console.error('❌ Airtable base is null - Check your .env file');
+      console.error('❌ Airtable base is null for Documents');
       return [];
     }
 
     const records = await base('Documents')
       .select({
         sort: [{ field: 'updated_date', direction: 'desc' }],
+        fields: ['title', 'document', 'category', 'updated_date']
       })
       .all();
 
-    console.log(`✅ Found ${records.length} records in Documents table`);
+    console.log(`✅ Found ${records.length} documents`);
 
     return records.map((record) => {
-      const doc = {
+      const attachments = record.get('document') as any[] | undefined;
+      
+      const firstAttachment = attachments && attachments.length > 0 
+        ? attachments[0] 
+        : null;
+
+      return {
         id: record.id,
-        title: record.get('title') as string || 'No Title',
-        url: record.get('url') as string || '',
+        title: record.get('title') as string || 'Untitled Document',
+        document: attachments || [],           // Full attachment array
         category: record.get('category') as string | undefined,
         updated_date: record.get('updated_date') as string | undefined,
+        // Optional: direct download URL for convenience
+        url: firstAttachment ? firstAttachment.url : '',
       };
-      console.log('📄 Document:', doc.title);
-      return doc;
     });
   } catch (error: any) {
-    console.error('❌ Airtable Error in getAllDocuments:', error.message);
-    console.error('Full error:', error);
+    console.error('❌ Error fetching documents:', error.message);
     return [];
   }
 }
