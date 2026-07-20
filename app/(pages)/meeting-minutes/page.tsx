@@ -7,10 +7,22 @@ import { FileText, Calendar, Users, CheckSquare, ChevronRight } from 'lucide-rea
 import { getAllMeetingMinutes } from '@/lib/airtable'
 import { formatDate } from '@/lib/utils'
 import type { MeetingMinutes } from '@/lib/types'
+import { useRouter } from 'next/navigation';
 
 export default function MeetingMinutesPage() {
   const [meetings, setMeetings] = useState<MeetingMinutes[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  const router = useRouter();
+
+useEffect(() => {
+  const validated = localStorage.getItem('meeting_minutes_access');
+  const expiry = localStorage.getItem('meeting_minutes_access_expiry');
+
+  if (!validated || !expiry || new Date(expiry) < new Date()) {
+    router.push('/meeting-minutes/gateway');
+  }
+}, [router]);
 
   useEffect(() => {
     async function loadMeetings() {

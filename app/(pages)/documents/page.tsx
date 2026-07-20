@@ -5,12 +5,29 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { getAllDocuments } from '@/lib/airtable'
 import type { Document } from '@/lib/types'
 import { FileText, Download, FolderOpen, Search, Calendar, ArrowUpRight, HelpCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation';
 
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('All')
+  const router = useRouter();
+
+useEffect(() => {
+  const checkAccess = () => {
+    const validated = localStorage.getItem('documents_access');
+    const expiry = localStorage.getItem('documents_access_expiry');
+
+    if (!validated || !expiry || new Date(expiry) < new Date()) {
+      router.push('/documents/gateway');
+      return false;
+    }
+    return true;
+  };
+
+  checkAccess();
+}, [router]);
 
   useEffect(() => {
     const fetchDocuments = async () => {

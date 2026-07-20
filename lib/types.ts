@@ -5,7 +5,10 @@ export interface SiteSettings {
   welcome_text: string
   logo_url?: string
   club_hours?: string
+  community_code?: string;           // ← Add this
 }
+
+
 
 export interface News {
   id: string
@@ -27,6 +30,15 @@ export interface Amenity {
   image?: string[]           // ← Changed to Attachment field
   category?: string
 }
+
+export interface DocumentAccessRequest {
+  id: string;
+  Email: string;
+  Status?: string;
+  'Code Sent'?: boolean;
+}
+
+
 export interface Document {
   id: string
   title: string

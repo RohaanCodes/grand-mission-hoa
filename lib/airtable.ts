@@ -9,7 +9,8 @@ import type {
   Contact,
   MeetingMinutes,
   Sponsor, 
-  AirtableAttachment         // ← Added
+  AirtableAttachment,     // ← Added
+  DocumentAccessRequest
 } from './types'
 
 const apiKey = process.env.NEXT_PUBLIC_AIRTABLE_API_KEY
@@ -32,15 +33,37 @@ function transformRecord<T>(record: any): T {
 }
 
 // Site Settings
+// Site Settings
 export async function getSiteSettings(): Promise<SiteSettings | null> {
   try {
-    if (!base) return null
-    const records = await base('SiteSettings').select().firstPage()
-    if (records.length === 0) return null
-    return transformRecord<SiteSettings>(records[0])
+    if (!base) return null;
+
+    const records = await base('SiteSettings')
+      .select({
+        fields: [
+          'hero_title',
+          'hero_subtitle',
+          'welcome_text',
+          'logo_url',
+          'club_hours',
+          'community_code'     // ← Must be explicitly listed
+        ]
+      })
+      .firstPage();
+
+    if (records.length === 0) {
+      console.warn('⚠️ No record found in SiteSettings table');
+      return null;
+    }
+
+    const settings = transformRecord<SiteSettings>(records[0]);
+    console.log("✅ SiteSettings loaded successfully:", settings);
+    console.log("🔑 Community Code value:", settings.community_code);
+
+    return settings;
   } catch (error) {
-    console.error('Error fetching site settings:', error)
-    return null
+    console.error('❌ Error fetching site settings:', error);
+    return null;
   }
 }
 
@@ -671,5 +694,28 @@ export async function getAllFAQs(): Promise<FAQ[]> {
   } catch (error: any) {
     console.error('❌ Error fetching FAQs:', error.message);
     return [];
+  }
+}
+
+// Create Document Access Request (for email option)
+export async function createDocumentAccessRequest(email: string): Promise<boolean> {
+  try {
+    if (!base) return false;
+
+    await base('Document Access Requests').create([
+      {
+        fields: {
+          Email: email.trim(),
+          Status: 'Pending',
+          'Code Sent': false,
+        }
+      }
+    ]);
+
+    console.log(`✅ Access request created for ${email}`);
+    return true;
+  } catch (error: any) {
+    console.error('❌ Error creating access request:', error.message);
+    return false;
   }
 }
