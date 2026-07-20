@@ -10,21 +10,26 @@ import type { MeetingMinutes } from '@/lib/types'
 import { useRouter } from 'next/navigation';
 
 export default function MeetingMinutesPage() {
+  const router = useRouter();
   const [meetings, setMeetings] = useState<MeetingMinutes[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
-  const router = useRouter();
-
-useEffect(() => {
-  const validated = localStorage.getItem('meeting_minutes_access');
-  const expiry = localStorage.getItem('meeting_minutes_access_expiry');
-
-  if (!validated || !expiry || new Date(expiry) < new Date()) {
-    router.push('/meeting-minutes/gateway');
-  }
-}, [router]);
-
+  // Gateway Protection
   useEffect(() => {
+    const checkAccess = () => {
+      const validated = localStorage.getItem('meeting_minutes_access');
+      const expiry = localStorage.getItem('meeting_minutes_access_expiry');
+
+      if (!validated || !expiry || new Date(expiry) < new Date()) {
+        router.push('/meeting-minutes/gateway');
+        return false;
+      }
+      return true;
+    };
+
+    if (!checkAccess()) return;
+
+    // Load data only if access granted
     async function loadMeetings() {
       try {
         const data = await getAllMeetingMinutes()
@@ -35,8 +40,8 @@ useEffect(() => {
         setIsLoading(false)
       }
     }
-    loadMeetings()
-  }, [])
+    loadMeetings();
+  }, [router]);
 
   return (
     <main className="min-h-screen bg-slate-50/30 pb-16 pt-6">

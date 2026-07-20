@@ -1,33 +1,50 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { getAllDocuments } from '@/lib/airtable'
-import type { Document } from '@/lib/types'
-import { FileText, Download, FolderOpen, Search, Calendar, ArrowUpRight, HelpCircle } from 'lucide-react'
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { getAllDocuments } from '@/lib/airtable';
+import type { Document } from '@/lib/types';
+import { FileText, Download, FolderOpen, Search, Calendar, ArrowUpRight, HelpCircle } from 'lucide-react';
 
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
   const router = useRouter();
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);        // ← Changed
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
-useEffect(() => {
-  const checkAccess = () => {
-    const validated = localStorage.getItem('documents_access');
-    const expiry = localStorage.getItem('documents_access_expiry');
+  // Gateway Check
+  useEffect(() => {
+    const checkAccess = () => {
+      const validated = localStorage.getItem('documents_access');
+      const expiry = localStorage.getItem('documents_access_expiry');
 
-    if (!validated || !expiry || new Date(expiry) < new Date()) {
-      router.push('/documents/gateway');
-      return false;
-    }
-    return true;
-  };
+      if (!validated || !expiry || new Date(expiry) < new Date()) {
+        router.push('/documents/gateway');
+        return false;
+      }
+      return true;
+    };
 
-  checkAccess();
-}, [router]);
+    if (!checkAccess()) return;
+
+    // Only fetch data if access granted
+    const fetchDocuments = async () => {
+      try {
+        const data = await getAllDocuments();
+        setDocuments(data);
+      } catch (error) {
+        console.error('Error fetching documents:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDocuments();
+  }, [router]);
+
+  // ... rest of your code remains same
 
   useEffect(() => {
     const fetchDocuments = async () => {
