@@ -27,7 +27,7 @@ export interface Amenity {
   slug: string
   description: string
   hours?: string
-  image?: string[]           // ← Changed to Attachment field
+  image?: AirtableAttachment[]           // ← Changed to Attachment field
   category?: string
 }
 
@@ -133,4 +133,50 @@ export interface FAQ {
   Answer: string
   Category?: string
   Order?: number
+}
+
+
+
+
+
+export interface RequestCategory {
+  id: string
+  category_name: string
+}
+
+export interface ServiceRequestInput {
+  requesterName: string
+  requesterEmail: string
+  unitAddress: string
+  phone?: string
+  category?: string
+  description: string
+  wantsBoardInvolvement: boolean
+  wantsAgentTakeover: boolean
+  forwardedEmailContent?: string
+}
+
+export interface ServiceRequest {
+  id: string
+  requester_name: string
+  requester_email: string
+  unit_address?: string
+  phone?: string
+  category_resident_selected?: string
+  final_category?: string
+  description: string
+  status?: string
+  next_follow_up_date?: string
+  submitted_date?: string
+  last_updated?: string
+}
+
+export interface ResidentProfile {
+  id: string
+  resident_name: string
+  email: string
+  unit_address?: string
+  phone?: string
+  profile_status?: 'No Profile' | 'Profile Created'
+  access_token?: string
 }

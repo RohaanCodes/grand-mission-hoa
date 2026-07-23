@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { getAllEvents } from '@/lib/airtable'
 import type { Event } from '@/lib/types'
 import { Calendar, MapPin, ChevronLeft, X, Trophy } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([])
@@ -151,7 +152,7 @@ export default function EventsPage() {
                                   <div className="flex gap-2.5 items-start">
                                     <Calendar className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
                                     <span>
-                                      {event['Event Date']}
+                                      {formatDate(event['Event Date'])}
                                     </span>
                                   </div>
                                   {event.Location && (

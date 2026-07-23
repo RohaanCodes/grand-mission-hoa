@@ -10,7 +10,11 @@ import type {
   MeetingMinutes,
   Sponsor, 
   AirtableAttachment,     // ← Added
-  DocumentAccessRequest
+  DocumentAccessRequest,
+   RequestCategory,
+  ServiceRequestInput,
+  ServiceRequest,
+  ResidentProfile,
 } from './types'
 
 const apiKey = process.env.NEXT_PUBLIC_AIRTABLE_API_KEY
@@ -178,10 +182,10 @@ export async function getAllAmenities(): Promise<Amenity[]> {
     return records.map((record) => ({
       id: record.id,
       name: record.get('name') as string || '',
-      slug: record.get('slug') as string | undefined,
+      slug: record.get('slug') as string || '',
       description: record.get('description') as string || '',
       hours: record.get('hours') as string | undefined,
-      image: record.get('image') as string[] | undefined,        // ← Attachment
+      image: record.get('image') as AirtableAttachment[] | undefined,
       category: record.get('category') as string | undefined,
     }));
   } catch (error: any) {
@@ -207,10 +211,10 @@ export async function getAmenityBySlug(slug: string): Promise<Amenity | null> {
     return {
       id: record.id,
       name: record.get('name') as string || '',
-      slug: record.get('slug') as string | undefined,
+      slug: record.get('slug') as string || '',
       description: record.get('description') as string || '',
       hours: record.get('hours') as string | undefined,
-      image: record.get('image') as string[] | undefined,
+      image: record.get('image') as AirtableAttachment[] | undefined,
       category: record.get('category') as string | undefined,
     };
   } catch (error: any) {
@@ -716,6 +720,145 @@ export async function createDocumentAccessRequest(email: string): Promise<boolea
     return true;
   } catch (error: any) {
     console.error('❌ Error creating access request:', error.message);
+    return false;
+  }
+}
+
+
+export async function getRequestCategories(): Promise<RequestCategory[]> {
+  try {
+    if (!base) return [];
+
+    const records = await base('Request Categories')
+      .select({
+        fields: ['Category Name'],
+      })
+      .all();
+
+    return records.map((record) => ({
+      id: record.id,
+      category_name: (record.get('Category Name') as string) || '',
+    }));
+  } catch (error: any) {
+    console.error('❌ Error fetching request categories:', error.message);
+    return [];
+  }
+}
+
+export async function submitServiceRequest(data: ServiceRequestInput): Promise<boolean> {
+  try {
+    if (!base) {
+      console.error('❌ Airtable base is null');
+      return false;
+    }
+
+    await base('Service Requests').create([
+      {
+        fields: {
+          'Requester Name': data.requesterName,
+          'Requester Email': data.requesterEmail,
+          'Unit / Address': data.unitAddress,
+          Phone: data.phone || '',
+          'Category (Resident Selected)': data.category || 'Not Sure / Let System Decide',
+          Description: data.description,
+          'Wants Board Involvement': data.wantsBoardInvolvement,
+          'Wants Agent Takeover': data.wantsAgentTakeover,
+          'Forwarded Email Content': data.forwardedEmailContent || '',
+        },
+      },
+    ]);
+
+    console.log('✅ Service request submitted successfully');
+    return true;
+  } catch (error: any) {
+    console.error('❌ Error submitting service request:', error.message);
+    return false;
+  }
+}
+
+export async function getResidentByAccessToken(token: string): Promise<ResidentProfile | null> {
+  try {
+    if (!base || !token) return null;
+
+    const records = await base('Resident Profiles')
+      .select({
+        filterByFormula: `{Access Token} = '${token.replace(/'/g, "\\'")}'`,
+        maxRecords: 1,
+      })
+      .firstPage();
+
+    if (records.length === 0) return null;
+
+    const record = records[0];
+    return {
+      id: record.id,
+      resident_name: (record.get('Resident Name') as string) || '',
+      email: (record.get('Email') as string) || '',
+      unit_address: record.get('Unit / Address') as string | undefined,
+      phone: record.get('Phone') as string | undefined,
+      profile_status: record.get('Profile Status') as any,
+      access_token: record.get('Access Token') as string | undefined,
+    };
+  } catch (error: any) {
+    console.error('❌ Error looking up resident by token:', error.message);
+    return null;
+  }
+}
+
+export async function getRequestsByResidentEmail(email: string): Promise<ServiceRequest[]> {
+  try {
+    if (!base || !email) return [];
+
+    const records = await base('Service Requests')
+      .select({
+        filterByFormula: `LOWER({Requester Email}) = LOWER('${email.replace(/'/g, "\\'")}')`,
+        sort: [{ field: 'Submitted Date', direction: 'desc' }],
+      })
+      .all();
+
+    return records.map((record) => {
+      const statusValue = record.get('Status') as any;
+      return {
+        id: record.id,
+        requester_name: (record.get('Requester Name') as string) || '',
+        requester_email: (record.get('Requester Email') as string) || '',
+        unit_address: record.get('Unit / Address') as string | undefined,
+        phone: record.get('Phone') as string | undefined,
+        category_resident_selected: record.get('Category (Resident Selected)') as string | undefined,
+        final_category: record.get('Final Category') as string | undefined,
+        description: (record.get('Description') as string) || '',
+        status: typeof statusValue === 'object' ? statusValue?.name : statusValue,
+        next_follow_up_date: record.get('Next Follow-up Date') as string | undefined,
+        submitted_date: record.get('Submitted Date') as string | undefined,
+        last_updated: record.get('Last Updated') as string | undefined,
+      };
+    });
+  } catch (error: any) {
+    console.error('❌ Error fetching requests for resident:', error.message);
+    return [];
+  }
+}
+
+
+export async function createLoginRequest(email: string): Promise<boolean> {
+  try {
+    if (!base) {
+      console.error('❌ Airtable base is null');
+      return false;
+    }
+
+    await base('Login Requests').create([
+      {
+        fields: {
+          Email: email.trim(),
+        },
+      },
+    ]);
+
+    console.log('✅ Login request created');
+    return true;
+  } catch (error: any) {
+    console.error('❌ Error creating login request:', error.message);
     return false;
   }
 }

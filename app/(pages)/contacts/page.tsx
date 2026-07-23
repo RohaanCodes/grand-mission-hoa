@@ -249,18 +249,22 @@ export default function ContactsPage() {
                     )}
 
                     {contact.website && (
-                      <div className="pt-2">
-                        <a 
-                          href={contact.website} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="inline-flex items-center gap-1.5 text-amber-700 hover:text-amber-800 text-xs font-bold uppercase tracking-wider py-1 hover:underline"
-                        >
-                          Visit Website 
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-                    )}
+  <div className="pt-2">
+    <a 
+      href={
+        contact.website.startsWith('http://') || contact.website.startsWith('https://')
+          ? contact.website
+          : `https://${contact.website}`
+      }
+      target="_blank" 
+      rel="noopener noreferrer" 
+      className="inline-flex items-center gap-1.5 text-amber-700 hover:text-amber-800 text-xs font-bold uppercase tracking-wider py-1 hover:underline"
+    >
+      Visit Website 
+      <ExternalLink className="w-3.5 h-3.5" />
+    </a>
+  </div>
+)}
                   </div>
                 </motion.div>
               ))}
