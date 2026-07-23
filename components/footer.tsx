@@ -118,13 +118,7 @@ export function Footer() {
                       <span>(O) 281-232-6621</span>
                       <span className="text-[10px] text-white/40 uppercase tracking-wider bg-white/10 px-1.5 py-0.5 rounded">Office</span>
                     </a>
-                    <a 
-                      href="tel:2817724655" 
-                      className="hover:text-accent active:text-accent/80 transition-all font-medium py-1 flex justify-between items-center bg-white/5 hover:bg-white/10 rounded px-2 w-full max-w-xs"
-                    >
-                      <span>(M) 281-772-4655</span>
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider bg-white/10 px-1.5 py-0.5 rounded">Mobile</span>
-                    </a>
+                    
                   </div>
                 </div>
               </li>
