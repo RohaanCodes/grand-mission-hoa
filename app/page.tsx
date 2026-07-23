@@ -438,22 +438,14 @@ if (loading) {
             viewport={{ once: true }}
           >
             <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 tracking-tight leading-tight">
-              Ready to Join Our Community?
+              Explore Community Images
             </h2>
-            <p className="text-white/80 text-sm sm:text-base md:text-lg mb-8 leading-relaxed max-w-2xl mx-auto px-1">
-              Discover why Grand Mission is the premier choice for luxury residential living.
-              Contact us to schedule a tour or learn more about available properties.
-            </p>
+             
             <div className="flex flex-col sm:flex-row gap-3.5 justify-center">
-              <Link
-                href="/contact"
-                className="inline-flex items-center justify-center px-8 py-3.5 bg-accent text-accent-foreground rounded-lg hover:bg-accent/95 active:scale-[0.98] transition-all font-bold text-base min-h-[44px] select-none touch-manipulation shadow-md"
-              >
-                Contact Us
-              </Link>
+               
               <Link
                 href="/gallery"
-                className="inline-flex items-center justify-center px-8 py-3.5 bg-white/10 hover:bg-white/15 active:scale-[0.98] text-white border border-white/20 rounded-lg transition-all font-bold text-base min-h-[44px] backdrop-blur-sm select-none touch-manipulation"
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-accent text-accent-foreground rounded-lg hover:bg-accent/95 active:scale-[0.98] transition-all font-bold text-base min-h-[44px] select-none touch-manipulation shadow-md"
               >
                 View Gallery
               </Link>
