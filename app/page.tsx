@@ -87,7 +87,7 @@ if (loading) {
 }
 
   const defaultTitle = 'Welcome to Grand Mission'
-  const defaultSubtitle = 'An Upscale Community Featuring World-Class Amenities, Exceptional Architecture & Unparalleled Lifestyle'
+  const defaultSubtitle = ''
   const heroTitle = siteSettings?.hero_title || defaultTitle
   const heroSubtitle = siteSettings?.hero_subtitle || defaultSubtitle
 
@@ -97,7 +97,7 @@ if (loading) {
       <HeroSection
         title={heroTitle}
         subtitle={heroSubtitle}
-        imageUrl="/images/GrandMission.jpeg"
+        imageUrl="/images/GHM-Hero.webp"
       />
 
       {/* ==================== BIG GALLERY CAROUSEL ==================== */}
@@ -122,22 +122,13 @@ if (loading) {
           <div className="relative overflow-hidden rounded-2xl md:rounded-3xl shadow-lg border border-slate-100">
             <Carousel images={[
               {
-                src: "/images/asset1.jpeg",
+                src: "/images/Resort-style-living.webp",
                 title: "Resort-Style Living",
                 subtitle: "Luxury homes surrounding premium amenities"
               },
+        
               {
-                src: "/images/asset2.jpeg",
-                title: "World-Class Amenities",
-                subtitle: "Recreation, pools, and family facilities"
-              },
-              {
-                src: "/images/asset3.jpeg",
-                title: "Aquatic Excellence",
-                subtitle: "State-of-the-art water park for all ages"
-              },
-              {
-                src: "/images/asset4.jpeg",
+                src: "/images/prestigious_homes.webp",
                 title: "Prestigious Homes",
                 subtitle: "Elegant architecture in a lakeside setting"
               },
