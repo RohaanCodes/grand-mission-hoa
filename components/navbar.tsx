@@ -122,7 +122,7 @@ export function Navbar() {
           {/* Desktop CTA Button */}
           <div className="hidden md:flex">
             <a
-              href="https://cai.vantaca.com/"
+              href="https://home.inframark.com/"
               className="bg-accent text-accent-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium"
             >
               Make a Payment
