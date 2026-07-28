@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
   },
   icons: {
-    icon: '/images/logo.png',
+    icon: '/images/logo-1.jpeg',
   },
 }
 
