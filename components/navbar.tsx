@@ -235,7 +235,7 @@ export function Navbar() {
               {/* Mobile CTA - Full width screen margins with great target height */}
               <div className="px-4 mt-5">
                 <a
-                  href="https://cai.vantaca.com/"
+                  href="https://home.inframark.com/"
                   onClick={handleLinkClick}
                   className="block w-full bg-accent text-accent-foreground px-4 py-3.5 rounded-xl text-center hover:opacity-90 active:scale-[0.98] transition-all font-bold tracking-wide shadow-sm min-h-[48px] flex items-center justify-center text-base"
                 >
