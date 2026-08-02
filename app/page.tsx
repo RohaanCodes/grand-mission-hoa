@@ -18,6 +18,7 @@ import { NewsCard } from '@/components/news-card'
 import { AmenitiesGrid } from '@/components/amenities-grid'
 import type { News, Amenity, Event, SiteSettings, FAQ } from '@/lib/types'
 import { Calendar, MapPin, ArrowRight, Plus, Minus } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
 
 export default function Home() {
   const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null)
@@ -285,17 +286,13 @@ if (loading) {
 
                           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs md:text-sm text-muted-foreground/90 mb-3 md:mb-4">
                             <div className="flex items-center gap-2">
-                              <Calendar className="w-4 h-4 text-primary/70 shrink-0" />
-                              <span>
-                                {event['Event Date']
-                                  ? new Date(event['Event Date']).toLocaleDateString('en-US', {
-                                      year: 'numeric',
-                                      month: 'long',
-                                      day: 'numeric',
-                                    })
-                                  : 'Date TBD'}
-                              </span>
-                            </div>
+  <Calendar className="w-4 h-4 text-primary/70 shrink-0" />
+  <span>
+    {event['Event Date']
+      ? formatDate(event['Event Date'])
+      : 'Date TBD'}
+  </span>
+</div>
                             {event.Location && (
                               <div className="flex items-center gap-2">
                                 <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
