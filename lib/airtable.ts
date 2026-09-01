@@ -11,10 +11,13 @@ import type {
   Sponsor, 
   AirtableAttachment,     // ← Added
   DocumentAccessRequest,
-   RequestCategory,
+  RequestCategory,
   ServiceRequestInput,
   ServiceRequest,
   ResidentProfile,
+  BoardMember,
+  RequestQuery,
+  FAQ
 } from './types'
 
 const apiKey = process.env.NEXT_PUBLIC_AIRTABLE_API_KEY
@@ -745,13 +748,12 @@ export async function getRequestCategories(): Promise<RequestCategory[]> {
   }
 }
 
-export async function submitServiceRequest(data: ServiceRequestInput): Promise<boolean> {
+export async function submitServiceRequest(
+  data: ServiceRequestInput,
+  submittedVia: string = 'Resident'
+): Promise<boolean> {
   try {
-    if (!base) {
-      console.error('❌ Airtable base is null');
-      return false;
-    }
-
+    if (!base) return false
     await base('Service Requests').create([
       {
         fields: {
@@ -761,18 +763,15 @@ export async function submitServiceRequest(data: ServiceRequestInput): Promise<b
           Phone: data.phone || '',
           'Category (Resident Selected)': data.category || 'Not Sure / Let System Decide',
           Description: data.description,
-          'Wants Board Involvement': data.wantsBoardInvolvement,
-          'Wants Agent Takeover': data.wantsAgentTakeover,
-          'Forwarded Email Content': data.forwardedEmailContent || '',
+          'Submitted Via': submittedVia,
+          
         },
       },
-    ]);
-
-    console.log('✅ Service request submitted successfully');
-    return true;
+    ])
+    return true
   } catch (error: any) {
-    console.error('❌ Error submitting service request:', error.message);
-    return false;
+    console.error('❌ Error submitting service request:', error.message)
+    return false
   }
 }
 
@@ -861,4 +860,253 @@ export async function createLoginRequest(email: string): Promise<boolean> {
     console.error('❌ Error creating login request:', error.message);
     return false;
   }
+}
+
+
+export async function generateBoardMagicLink(email: string): Promise<{ token: string; recordId: string; name: string } | null> {
+  try {
+    if (!base) return null
+    console.log('DEBUG base exists:', !!base)
+    const records = await base('Board Members')
+      .select({
+        filterByFormula: `LOWER({Email}) = LOWER('${email.replace(/'/g, "\\'")}')`,
+        maxRecords: 1,
+      })
+      .firstPage()
+
+    if (records.length === 0) return null
+
+    const token = crypto.randomUUID()
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
+
+    await base('Board Members').update([
+      {
+        id: records[0].id,
+        fields: {
+          'Magic Link Token': token,
+          'Magic Link Expires At': expiresAt,
+        },
+      },
+    ])
+
+    return { token, recordId: records[0].id, name: (records[0].get('Board Member Name') as string) || '' }
+  } catch (error: any) {
+    console.error('❌ Error generating board magic link:', error.message)
+    return null
+  }
+}
+
+export async function getBoardMemberByToken(token: string): Promise<BoardMember | null> {
+  try {
+    if (!base || !token) return null
+
+    const records = await base('Board Members')
+      .select({
+        filterByFormula: `{Magic Link Token} = '${token.replace(/'/g, "\\'")}'`,
+        maxRecords: 1,
+      })
+      .firstPage()
+
+    if (records.length === 0) return null
+
+    const record = records[0]
+    const expiresAt = record.get('Magic Link Expires At') as string | undefined
+    if (!expiresAt || new Date(expiresAt) < new Date()) return null
+
+    // single-use: clear immediately after successful validation
+    await base('Board Members').update([
+      { id: record.id, fields: { 'Magic Link Token': '', 'Magic Link Expires At': null } },
+    ])
+
+    return {
+      id: record.id,
+      name: (record.get('Board Member Name') as string) || '',
+      email: (record.get('Email') as string) || '',
+      phone: record.get('Phone') as string | undefined,
+      role: record.get('Role') as string | undefined,
+    }
+  } catch (error: any) {
+    console.error('❌ Error validating board token:', error.message)
+    return null
+  }
+}
+
+
+export async function getAllServiceRequests(): Promise<ServiceRequest[]> {
+  try {
+    if (!base) return []
+    const records = await base('Service Requests')
+      .select({ sort: [{ field: 'Submitted Date', direction: 'desc' }] })
+      .all()
+    return records.map((record) => {
+      const statusValue = record.get('Status') as any
+      return {
+        id: record.id,
+        requester_name: (record.get('Requester Name') as string) || '',
+        requester_email: (record.get('Requester Email') as string) || '',
+        unit_address: record.get('Unit / Address') as string | undefined,
+        phone: record.get('Phone') as string | undefined,
+        category_resident_selected: record.get('Category (Resident Selected)') as string | undefined,
+        final_category: record.get('Final Category') as string | undefined,
+        description: (record.get('Description') as string) || '',
+        status: typeof statusValue === 'object' ? statusValue?.name : statusValue,
+        next_follow_up_date: record.get('Next Follow-up Date') as string | undefined,
+        submitted_date: record.get('Submitted Date') as string | undefined,
+        last_updated: record.get('Last Updated') as string | undefined,
+        submitted_via: (record.get('Submitted Via') as any)?.name || record.get('Submitted Via') as string | undefined,
+        request_id_number: record.get('Request ID') as number | undefined,
+      }
+    })
+  } catch (error: any) {
+    console.error('❌ Error fetching all service requests:', error.message)
+    return []
+  }
+}
+
+export async function getBoardMemberById(recordId: string): Promise<BoardMember | null> {
+  try {
+    if (!base || !recordId) return null
+    const record = await base('Board Members').find(recordId)
+    return {
+      id: record.id,
+      name: (record.get('Board Member Name') as string) || '',
+      email: (record.get('Email') as string) || '',
+      phone: record.get('Phone') as string | undefined,
+      role: record.get('Role') as string | undefined,
+    }
+  } catch {
+    return null
+  }
+}
+
+export async function generateManagementMagicLink(email: string) {
+  try {
+    if (!base) return null
+    const records = await base('Management Companies')
+      .select({ filterByFormula: `LOWER({Contact Email}) = LOWER('${email.replace(/'/g, "\\'")}')`, maxRecords: 1 })
+      .firstPage()
+    if (records.length === 0) return null
+
+    const token = crypto.randomUUID()
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString()
+    await base('Management Companies').update([
+      { id: records[0].id, fields: { 'Magic Link Token': token, 'Magic Link Expires At': expiresAt } },
+    ])
+    return { token, name: (records[0].get('Company Name') as string) || '' }
+  } catch { return null }
+}
+
+export async function getManagementByToken(token: string) {
+  try {
+    if (!base || !token) return null
+    const records = await base('Management Companies')
+      .select({ filterByFormula: `{Magic Link Token} = '${token.replace(/'/g, "\\'")}'`, maxRecords: 1 })
+      .firstPage()
+    if (records.length === 0) return null
+    const record = records[0]
+    const expiresAt = record.get('Magic Link Expires At') as string | undefined
+    if (!expiresAt || new Date(expiresAt) < new Date()) return null
+    await base('Management Companies').update([
+      { id: record.id, fields: { 'Magic Link Token': '', 'Magic Link Expires At': null } },
+    ])
+    return { id: record.id, name: (record.get('Company Name') as string) || '', email: (record.get('Contact Email') as string) || '' }
+  } catch { return null }
+}
+
+export async function submitManagementRequest(data: {
+  requesterName: string
+  requesterEmail: string
+  category: string
+  description: string
+  proposedSolution?: string
+  dueDate?: string
+  estimatedCost?: string
+}): Promise<boolean> {
+  try {
+    if (!base) return false
+
+    const fields: any = {
+      'Requester Name': data.requesterName,
+      'Requester Email': data.requesterEmail,
+      'Category (Resident Selected)': data.category || 'Other',
+      Description: data.description,
+      'Submitted Via': 'Management Company',
+      'Routing Decision': 'Management', // record-keeping only; won't trigger dispatch since Status isn't New
+      Status: data.dueDate ? 'Agent In Progress' : 'Agent In Progress',
+     'Triage Started Date': new Date().toISOString().split('T')[0],
+'Triage Completed Date': new Date().toISOString().split('T')[0],
+    }
+    if (data.proposedSolution) fields['Management Proposed Solution'] = data.proposedSolution
+    if (data.dueDate) fields['Management Due Date'] = data.dueDate
+    if (data.estimatedCost) fields['Estimated Cost'] = data.estimatedCost
+
+    await base('Service Requests').create([{ fields }])
+    return true
+  } catch (error: any) {
+    console.error('❌ Error submitting management request:', error.message)
+    return false
+  }
+}
+
+export async function getManagementById(recordId: string) {
+  try {
+    if (!base || !recordId) return null
+    const record = await base('Management Companies').find(recordId)
+    return {
+      id: record.id,
+      name: (record.get('Company Name') as string) || '',
+      email: (record.get('Contact Email') as string) || '',
+    }
+  } catch {
+    return null
+  }
+}
+
+export async function getQueriesForRequest(requestIdNumber: number): Promise<RequestQuery[]> {
+  try {
+    if (!base) return []
+    const records = await base('Request Queries')
+      .select({ filterByFormula: `{Request ID Number} = ${requestIdNumber}` })
+      .all()
+    return records
+      .map((r) => ({
+        id: r.id,
+        queryText: (r.get('Query Text') as string) || '',
+        askedByName: (r.get('Asked By Name') as string) || '',
+        responseText: r.get('Response Text') as string | undefined,
+        answered: !!r.get('Answered'),
+        createdTime: r._rawJson.createdTime,
+      }))
+      .sort((a, b) => new Date(a.createdTime).getTime() - new Date(b.createdTime).getTime())
+  } catch { return [] }
+}
+
+export async function submitRequestQuery(data: {
+  requestIdNumber: number
+  queryText: string
+  askedByName: string
+  askedByEmail: string
+}): Promise<boolean> {
+  try {
+    if (!base) return false
+    await base('Request Queries').create([{
+      fields: {
+        'Request ID Number': data.requestIdNumber,
+        'Query Text': data.queryText,
+        'Asked By Name': data.askedByName,
+        'Asked By Email': data.askedByEmail,
+      },
+    }])
+    return true
+  } catch { return false }
+}
+
+export async function respondToQuery(queryId: string, responseText: string): Promise<boolean> {
+  try {
+    if (!base) return false
+    await base('Request Queries').update([
+      { id: queryId, fields: { 'Response Text': responseText, Answered: true } },
+    ])
+    return true
+  } catch { return false }
 }

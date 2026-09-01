@@ -151,9 +151,7 @@ export interface ServiceRequestInput {
   phone?: string
   category?: string
   description: string
-  wantsBoardInvolvement: boolean
-  wantsAgentTakeover: boolean
-  forwardedEmailContent?: string
+ 
 }
 
 export interface ServiceRequest {
@@ -169,6 +167,8 @@ export interface ServiceRequest {
   next_follow_up_date?: string
   submitted_date?: string
   last_updated?: string
+  submitted_via?: string
+  request_id_number?: number
 }
 
 export interface ResidentProfile {
@@ -179,4 +179,22 @@ export interface ResidentProfile {
   phone?: string
   profile_status?: 'No Profile' | 'Profile Created'
   access_token?: string
+}
+
+
+export interface BoardMember {
+  id: string
+  name: string
+  email: string
+  phone?: string
+  role?: string
+}
+
+export interface RequestQuery {
+  id: string
+  queryText: string
+  askedByName: string
+  responseText?: string
+  answered: boolean
+  createdTime: string
 }
