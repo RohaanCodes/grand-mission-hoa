@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getAllServiceRequests, getBoardMemberById } from '@/lib/airtable'
 import BoardDashboard from './BoardDashboard'
+import BoardAIAssistant from './BoardAIAssistant'
 
 export const metadata = { title: 'Board Dashboard | Grand Mission HOA' }
 
@@ -17,39 +18,23 @@ export default async function BoardDashboardPage() {
   const requests = await getAllServiceRequests()
 
   return (
-    <main
-      className="min-h-screen relative overflow-hidden"
-      style={{
-        backgroundColor: '#eef1ef',
-        backgroundImage:
-          'radial-gradient(circle, rgba(26,58,82,0.08) 1px, transparent 1px)',
-        backgroundSize: '22px 22px',
-      }}
-    >
-      <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-10 md:py-16 lg:py-24">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-8 gap-4">
+    <main className="min-h-screen bg-muted/40">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
           <div>
-            <h1 className="font-serif text-3xl sm:text-4xl text-primary mb-1">Board Dashboard</h1>
-            <p className="text-foreground/60 text-sm">Signed in as {boardMember.name}</p>
+            <h1 className="font-serif text-2xl sm:text-3xl text-primary mb-0.5">Board Dashboard</h1>
+            <p className="text-foreground/50 text-sm">Signed in as {boardMember.name}</p>
           </div>
           <a
-            href="/board/submit"
-            className="bg-accent text-accent-foreground px-4 py-2.5 rounded-md font-medium text-sm text-center w-full sm:w-auto"
-          >
-            Submit a Request
-          </a>
+           href="/board/submit"
+  className="bg-primary text-primary-foreground px-4 py-2.5 rounded-lg font-medium text-sm text-center w-full sm:w-auto hover:opacity-90 transition-opacity"
+>
+  Submit a Request
+</a>
         </div>
 
-        {/* Outer glass sheet */}
-        <div className="bg-white/25 backdrop-blur-2xl border border-white/40 rounded-[2rem] shadow-2xl p-4 sm:p-6 lg:p-8">
-          <BoardDashboard
-  requests={requests}
-  currentEmail={boardMember.email}
-  currentName={boardMember.name}
-  enableQueries
-  viewerRole="board"
-/>
-        </div>
+        <BoardDashboard requests={requests} currentEmail={boardMember.email} currentName={boardMember.name} viewerRole="board" />
+        <BoardAIAssistant />
       </section>
     </main>
   )

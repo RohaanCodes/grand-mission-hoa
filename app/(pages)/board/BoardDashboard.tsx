@@ -2,13 +2,14 @@
 'use client'
 import { useState, useMemo } from 'react'
 import { Inbox, Clock, CheckCircle2, BarChart3, ListChecks } from 'lucide-react'
-import RequestsList from '../profile/RequestsList'
+import InternalRequestCard from './InternalRequestCard'
 import InsightsPanel from './InsightsPanel'
 import type { ServiceRequest } from '@/lib/types'
 
-type Filter = 'all' | 'mine' | 'board' | 'residents' | 'management'
+type SourceFilter = 'all' | 'mine' | 'board' | 'residents' | 'management'
+type StatusFilter = 'all' | 'open' | 'new' | 'agent_in_progress' | 'awaiting_management' | 'awaiting_resident' | 'resolved_closed'
 
-const TABS: { key: Filter; label: string }[] = [
+const SOURCE_TABS: { key: SourceFilter; label: string }[] = [
   { key: 'all', label: 'All' },
   { key: 'mine', label: 'Mine' },
   { key: 'board', label: 'Board' },
@@ -16,84 +17,133 @@ const TABS: { key: Filter; label: string }[] = [
   { key: 'management', label: 'Management' },
 ]
 
+const STATUS_OPTIONS: { key: StatusFilter; label: string }[] = [
+  { key: 'all', label: 'Any status' },
+  { key: 'open', label: 'Open (not closed)' },
+  { key: 'new', label: 'New' },
+  { key: 'agent_in_progress', label: 'In Progress' },
+  { key: 'awaiting_management', label: 'Awaiting Management' },
+  { key: 'awaiting_resident', label: 'Awaiting Resident Info' },
+  { key: 'resolved_closed', label: 'Resolved / Closed' },
+]
+
 const CLOSED_STATUSES = ['Resolved', 'Closed', 'Closed (AI)']
+
+function matchesStatus(status: string | undefined, filter: StatusFilter): boolean {
+  const s = status || 'New'
+  switch (filter) {
+    case 'open': return !CLOSED_STATUSES.includes(s)
+    case 'new': return s === 'New'
+    case 'agent_in_progress': return s === 'Agent In Progress'
+    case 'awaiting_management': return s === 'Awaiting Management Response'
+    case 'awaiting_resident': return s === 'Awaiting Resident Info'
+    case 'resolved_closed': return CLOSED_STATUSES.includes(s)
+    default: return true
+  }
+}
 
 export default function BoardDashboard({
   requests,
   currentEmail,
-  currentName,
-  enableQueries = false,
-viewerRole = 'board',
+  currentName = '',
+  viewerRole = 'board',
 }: {
   requests: ServiceRequest[]
   currentEmail: string
   currentName?: string
-  enableQueries?: boolean
   viewerRole?: 'board' | 'management'
 }) {
-  const [filter, setFilter] = useState<Filter>('all')
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
 
   const filtered = useMemo(() => {
-    switch (filter) {
+    let result = requests
+    switch (sourceFilter) {
       case 'mine':
-        return requests.filter((r) => r.requester_email?.toLowerCase() === currentEmail.toLowerCase())
+        result = result.filter((r) => r.requester_email?.toLowerCase() === currentEmail.toLowerCase())
+        break
       case 'board':
-        return requests.filter((r) => r.submitted_via === 'Board Member')
+        result = result.filter((r) => r.submitted_via === 'Board Member')
+        break
       case 'residents':
-        return requests.filter((r) => r.submitted_via === 'Resident')
+        result = result.filter((r) => r.submitted_via === 'Resident')
+        break
       case 'management':
-        return requests.filter((r) => r.submitted_via === 'Management Company')
-      default:
-        return requests
+        result = result.filter((r) => r.submitted_via === 'Management Company')
+        break
     }
-  }, [requests, filter, currentEmail])
+    return result.filter((r) => matchesStatus(r.status, statusFilter))
+  }, [requests, sourceFilter, statusFilter, currentEmail])
 
   const openCount = requests.filter((r) => !CLOSED_STATUSES.includes(r.status || '')).length
   const closedCount = requests.length - openCount
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      {/* ANALYTICS ISLAND */}
+    <div className="space-y-5">
+      {/* STATS ROW — no wrapping panel, just clean cards directly on the page */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <StatCard icon={<Inbox className="w-5 h-5" strokeWidth={1.75} />} value={requests.length} label="Total" tone="primary" />
+        <StatCard icon={<Clock className="w-5 h-5" strokeWidth={1.75} />} value={openCount} label="Open" tone="accent" />
+        <StatCard icon={<CheckCircle2 className="w-5 h-5" strokeWidth={1.75} />} value={closedCount} label="Closed" tone="secondary" />
+      </div>
+
+      {/* ANALYTICS */}
       <Panel icon={<BarChart3 className="w-4 h-4" strokeWidth={2} />} title="Analytics">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
-          <StatCard icon={<Inbox className="w-5 h-5" strokeWidth={1.75} />} value={requests.length} label="Total" tone="primary" />
-          <StatCard icon={<Clock className="w-5 h-5" strokeWidth={1.75} />} value={openCount} label="Open" tone="accent" />
-          <StatCard icon={<CheckCircle2 className="w-5 h-5" strokeWidth={1.75} />} value={closedCount} label="Closed" tone="secondary" />
-        </div>
         <InsightsPanel requests={requests} />
       </Panel>
 
-      {/* REQUESTS ISLAND */}
+      {/* REQUESTS */}
       <Panel
         icon={<ListChecks className="w-4 h-4" strokeWidth={2} />}
         title="Requests"
         subtitle={`${filtered.length} of ${requests.length}`}
         headerRight={
-          <div className="flex items-center gap-1 bg-white/30 backdrop-blur-md rounded-full p-1 overflow-x-auto scrollbar-hide max-w-full">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setFilter(tab.key)}
-                className={`flex-shrink-0 whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${
-                  filter === tab.key
-                    ? 'bg-white/90 text-primary shadow-sm'
-                    : 'text-foreground/55 hover:text-foreground/80'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div className="flex items-center gap-1 bg-primary/8 rounded-lg p-1 overflow-x-auto scrollbar-hide max-w-full">
+              {SOURCE_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setSourceFilter(tab.key)}
+                  className={`flex-shrink-0 whitespace-nowrap px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                    sourceFilter === tab.key
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-primary/60 hover:bg-primary/10'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              className="bg-accent/15 border border-accent/30 rounded-lg px-3 py-1.5 text-xs sm:text-sm font-medium text-[#8a6d2f] focus:outline-none focus:ring-2 focus:ring-accent/50"
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>{opt.label}</option>
+              ))}
+            </select>
           </div>
         }
       >
-        <RequestsList
-  requests={filtered}
-  showRequester
-  enableQueries={enableQueries}
-  currentName={currentName}
-  currentEmail={currentEmail}
-  viewerRole={viewerRole}
-/>
+        {filtered.length === 0 ? (
+          <div className="bg-muted/50 rounded-lg p-10 text-center">
+            <p className="text-foreground/50 text-sm">No requests match these filters.</p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {filtered.map((req, i) => (
+              <InternalRequestCard
+                key={req.id}
+                req={req}
+                index={i}
+                viewerRole={viewerRole}
+                currentName={currentName}
+                currentEmail={currentEmail}
+              />
+            ))}
+          </div>
+        )}
       </Panel>
     </div>
   )
@@ -113,18 +163,18 @@ function Panel({
   children: React.ReactNode
 }) {
   return (
-    <div className="bg-white/50 backdrop-blur-xl border border-white/60 rounded-3xl shadow-lg overflow-hidden">
-      <div className="px-5 sm:px-8 py-5 border-b border-white/50 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-5 sm:px-6 py-4 border-b border-border flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2.5">
           <span className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
             {icon}
           </span>
-          <h2 className="font-serif text-lg text-primary">{title}</h2>
+          <h2 className="font-serif text-base text-primary">{title}</h2>
           {subtitle && <span className="text-xs text-foreground/40">{subtitle}</span>}
         </div>
         {headerRight}
       </div>
-      <div className="p-5 sm:p-8">{children}</div>
+      <div className="p-5 sm:p-6">{children}</div>
     </div>
   )
 }
@@ -147,12 +197,12 @@ function StatCard({
   }[tone]
 
   return (
-    <div className="bg-white/60 backdrop-blur-md border border-white/60 rounded-2xl p-4 sm:p-5 flex items-center gap-4 shadow-sm">
-      <div className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${toneClasses}`}>
+    <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
+      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${toneClasses}`}>
         {icon}
       </div>
       <div>
-        <p className="font-serif text-xl sm:text-2xl text-primary leading-none mb-1">{value}</p>
+        <p className="font-serif text-xl text-primary leading-none mb-1">{value}</p>
         <p className="text-xs uppercase tracking-wide text-foreground/50">{label}</p>
       </div>
     </div>

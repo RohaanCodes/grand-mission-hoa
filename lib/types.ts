@@ -169,6 +169,10 @@ export interface ServiceRequest {
   last_updated?: string
   submitted_via?: string
   request_id_number?: number
+  private_notes?: string
+  proposed_solution?: string
+  estimated_cost?: string
+  management_due_date?: string
 }
 
 export interface ResidentProfile {

@@ -1,11 +1,10 @@
 // app/(pages)/board/InsightsPanel.tsx
 'use client'
 import { useMemo } from 'react'
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import type { ServiceRequest } from '@/lib/types'
 
-const COLORS = ['#c9a961', '#8a9a6f', '#4a7a7a', '#b8724a', '#8a6fb0']
-const LIGHT_TICK = 'rgba(255,255,255,0.85)'
+const BAR_COLORS = ['#c9a961', '#8a9a6f', '#4a7a7a', '#b8724a', '#8a6fb0', '#5a8ab0']
 
 export default function InsightsPanel({ requests }: { requests: ServiceRequest[] }) {
   const byCategory = useMemo(() => {
@@ -14,7 +13,7 @@ export default function InsightsPanel({ requests }: { requests: ServiceRequest[]
       const c = r.final_category || r.category_resident_selected || 'Other'
       counts[c] = (counts[c] || 0) + 1
     })
-    return Object.entries(counts).map(([name, count]) => ({ name, count }))
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])
   }, [requests])
 
   const bySubmittedVia = useMemo(() => {
@@ -23,7 +22,7 @@ export default function InsightsPanel({ requests }: { requests: ServiceRequest[]
       const v = r.submitted_via || 'Unknown'
       counts[v] = (counts[v] || 0) + 1
     })
-    return Object.entries(counts).map(([name, count]) => ({ name, count }))
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])
   }, [requests])
 
   const byResolution = useMemo(() => {
@@ -34,73 +33,95 @@ export default function InsightsPanel({ requests }: { requests: ServiceRequest[]
       else open++
     })
     return [
-      { name: 'Auto-Closed (AI)', value: autoClosed },
-      { name: 'Resolved', value: resolved },
-      { name: 'Still Open', value: open },
+      { name: 'Auto-Closed (AI)', value: autoClosed, color: '#c9a961' },
+      { name: 'Resolved', value: resolved, color: '#8a9a6f' },
+      { name: 'Still Open', value: open, color: '#4a7a7a' },
     ].filter((d) => d.value > 0)
   }, [requests])
 
   return (
     <div className="bg-primary rounded-2xl p-5 sm:p-6 mb-10 shadow-inner">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <ChartCard title="By Category" tint="neutral">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={byCategory} margin={{ left: -20 }}>
-              <XAxis dataKey="name" tick={{ fontSize: 11, fill: LIGHT_TICK }} interval={0} angle={-20} textAnchor="end" height={50} />
-              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: LIGHT_TICK }} />
-              <Tooltip />
-              <Bar dataKey="count" fill="#c9a961" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <ChartCard title="By Category">
+          <BarList data={byCategory} />
         </ChartCard>
 
-        <ChartCard title="By Resolution Path" tint="sage">
-          <ResponsiveContainer width="100%" height={220}>
-            <PieChart>
-              <Pie data={byResolution} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80}>
-                {byResolution.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 12, color: LIGHT_TICK }} />
-            </PieChart>
-          </ResponsiveContainer>
+        <ChartCard title="By Resolution Path">
+          <DonutWithTotal data={byResolution} />
         </ChartCard>
 
-        <ChartCard title="By Submitted Via" tint="gold">
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={bySubmittedVia} layout="vertical" margin={{ left: 20 }}>
-              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11, fill: LIGHT_TICK }} />
-              <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: LIGHT_TICK }} width={110} />
-              <Tooltip />
-              <Bar dataKey="count" fill="#c9a961" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        <ChartCard title="By Submitted Via">
+          <BarList data={bySubmittedVia} />
         </ChartCard>
       </div>
     </div>
   )
 }
 
-function ChartCard({
-  title,
-  tint,
-  children,
-}: {
-  title: string
-  tint: 'neutral' | 'sage' | 'gold'
-  children: React.ReactNode
-}) {
-  const tintClasses = {
-    neutral: 'bg-white/10 border-white/15',
-    sage: 'bg-secondary/25 border-secondary/30',
-    gold: 'bg-accent/20 border-accent/25',
-  }[tint]
+function BarList({ data }: { data: [string, number][] }) {
+  if (data.length === 0) {
+    return <p className="text-white/40 text-sm py-6 text-center">No data yet</p>
+  }
+  const max = Math.max(...data.map(([, count]) => count))
+  return (
+    <div className="space-y-3">
+      {data.map(([name, count], i) => (
+        <div key={name}>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-sm text-white/85">{name}</span>
+            <span className="text-sm font-medium text-white">{count}</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{ width: `${(count / max) * 100}%`, backgroundColor: BAR_COLORS[i % BAR_COLORS.length] }}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DonutWithTotal({ data }: { data: { name: string; value: number; color: string }[] }) {
+  const total = data.reduce((sum, d) => sum + d.value, 0)
+
+  if (total === 0) {
+    return <p className="text-white/40 text-sm py-6 text-center">No data yet</p>
+  }
 
   return (
-    <div className={`backdrop-blur-md border rounded-2xl p-5 ${tintClasses}`}>
-      <h3 className="font-serif text-base text-white mb-2">{title}</h3>
+    <div>
+      <div className="relative">
+        <ResponsiveContainer width="100%" height={180}>
+          <PieChart>
+            <Pie data={data} dataKey="value" nameKey="name" innerRadius={55} outerRadius={78} paddingAngle={3} strokeWidth={0}>
+              {data.map((d, i) => <Cell key={i} fill={d.color} />)}
+            </Pie>
+            <Tooltip />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <span className="font-serif text-2xl text-white">{total}</span>
+          <span className="text-[10px] uppercase tracking-wide text-white/50">Total</span>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5 justify-center mt-3">
+        {data.map((d) => (
+          <div key={d.name} className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: d.color }} />
+            <span className="text-xs text-white/70">{d.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-white/8 border border-white/10 rounded-2xl p-5">
+      <h3 className="font-serif text-base text-white mb-4">{title}</h3>
       {children}
     </div>
   )

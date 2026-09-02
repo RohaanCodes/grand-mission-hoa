@@ -932,7 +932,7 @@ export async function getBoardMemberByToken(token: string): Promise<BoardMember 
 }
 
 
-export async function getAllServiceRequests(): Promise<ServiceRequest[]> {
+export async function getAllServiceRequests(includePrivateNotes: boolean = false): Promise<ServiceRequest[]> {
   try {
     if (!base) return []
     const records = await base('Service Requests')
@@ -955,12 +955,24 @@ export async function getAllServiceRequests(): Promise<ServiceRequest[]> {
         last_updated: record.get('Last Updated') as string | undefined,
         submitted_via: (record.get('Submitted Via') as any)?.name || record.get('Submitted Via') as string | undefined,
         request_id_number: record.get('Request ID') as number | undefined,
+        private_notes: includePrivateNotes ? (record.get('Management Private Notes') as string | undefined) : undefined,
+        proposed_solution: record.get('Management Proposed Solution') as string | undefined,
+estimated_cost: record.get('Estimated Cost') as string | undefined,
+management_due_date: record.get('Management Due Date') as string | undefined,
       }
     })
   } catch (error: any) {
     console.error('❌ Error fetching all service requests:', error.message)
     return []
   }
+}
+
+export async function updatePrivateNote(requestId: string, notes: string): Promise<boolean> {
+  try {
+    if (!base) return false
+    await base('Service Requests').update([{ id: requestId, fields: { 'Management Private Notes': notes } }])
+    return true
+  } catch { return false }
 }
 
 export async function getBoardMemberById(recordId: string): Promise<BoardMember | null> {
@@ -1107,6 +1119,14 @@ export async function respondToQuery(queryId: string, responseText: string): Pro
     await base('Request Queries').update([
       { id: queryId, fields: { 'Response Text': responseText, Answered: true } },
     ])
+    return true
+  } catch { return false }
+}
+
+export async function closeRequest(requestId: string): Promise<boolean> {
+  try {
+    if (!base) return false
+    await base('Service Requests').update([{ id: requestId, fields: { Status: 'Closed' } }])
     return true
   } catch { return false }
 }
