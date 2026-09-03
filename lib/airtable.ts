@@ -19,6 +19,8 @@ import type {
   RequestQuery,
   FAQ
 } from './types'
+import { verifyAndResolveMapsLink, extractCoordsFromMapsLink } from './mapUtils'
+
 
 const apiKey = process.env.NEXT_PUBLIC_AIRTABLE_API_KEY
 const baseId = process.env.NEXT_PUBLIC_AIRTABLE_BASE_ID
@@ -754,20 +756,31 @@ export async function submitServiceRequest(
 ): Promise<boolean> {
   try {
     if (!base) return false
-    await base('Service Requests').create([
-      {
-        fields: {
-          'Requester Name': data.requesterName,
-          'Requester Email': data.requesterEmail,
-          'Unit / Address': data.unitAddress,
-          Phone: data.phone || '',
-          'Category (Resident Selected)': data.category || 'Not Sure / Let System Decide',
-          Description: data.description,
-          'Submitted Via': submittedVia,
-          
-        },
-      },
-    ])
+
+    const fields: any = {
+      'Requester Name': data.requesterName,
+      'Requester Email': data.requesterEmail,
+      'Unit / Address': data.unitAddress,
+      Phone: data.phone || '',
+      'Category (Resident Selected)': data.category || 'Not Sure / Let System Decide',
+      Description: data.description,
+      'Submitted Via': submittedVia,
+    }
+
+    if (data.locationLink) {
+  const { verified, resolvedUrl } = await verifyAndResolveMapsLink(data.locationLink)
+  if (verified && resolvedUrl) {
+    fields['Location Link'] = resolvedUrl
+    const coords = await extractCoordsFromMapsLink(data.locationLink)
+    if (coords) {
+      fields['Latitude'] = coords.lat
+      fields['Longitude'] = coords.lng
+    }
+  }
+  // if not verified, the link is silently dropped, nothing is stored
+}
+
+    await base('Service Requests').create([{ fields }])
     return true
   } catch (error: any) {
     console.error('❌ Error submitting service request:', error.message)
@@ -957,8 +970,11 @@ export async function getAllServiceRequests(includePrivateNotes: boolean = false
         request_id_number: record.get('Request ID') as number | undefined,
         private_notes: includePrivateNotes ? (record.get('Management Private Notes') as string | undefined) : undefined,
         proposed_solution: record.get('Management Proposed Solution') as string | undefined,
-estimated_cost: record.get('Estimated Cost') as string | undefined,
-management_due_date: record.get('Management Due Date') as string | undefined,
+        estimated_cost: record.get('Estimated Cost') as string | undefined,
+        management_due_date: record.get('Management Due Date') as string | undefined,
+        location_link: record.get('Location Link') as string | undefined,
+        closed_date: record.get('Closed Date') as string | undefined, 
+        
       }
     })
   } catch (error: any) {
@@ -1033,6 +1049,7 @@ export async function submitManagementRequest(data: {
   proposedSolution?: string
   dueDate?: string
   estimatedCost?: string
+  locationLink?: string
 }): Promise<boolean> {
   try {
     if (!base) return false
@@ -1043,14 +1060,27 @@ export async function submitManagementRequest(data: {
       'Category (Resident Selected)': data.category || 'Other',
       Description: data.description,
       'Submitted Via': 'Management Company',
-      'Routing Decision': 'Management', // record-keeping only; won't trigger dispatch since Status isn't New
-      Status: data.dueDate ? 'Agent In Progress' : 'Agent In Progress',
-     'Triage Started Date': new Date().toISOString().split('T')[0],
-'Triage Completed Date': new Date().toISOString().split('T')[0],
+      'Routing Decision': 'Management',
+      Status: 'Agent In Progress',
+      'Triage Started Date': new Date().toISOString().split('T')[0],
+      'Triage Completed Date': new Date().toISOString().split('T')[0],
     }
     if (data.proposedSolution) fields['Management Proposed Solution'] = data.proposedSolution
     if (data.dueDate) fields['Management Due Date'] = data.dueDate
     if (data.estimatedCost) fields['Estimated Cost'] = data.estimatedCost
+
+    if (data.locationLink) {
+  const { verified, resolvedUrl } = await verifyAndResolveMapsLink(data.locationLink)
+  if (verified && resolvedUrl) {
+    fields['Location Link'] = resolvedUrl
+    const coords = await extractCoordsFromMapsLink(data.locationLink)
+    if (coords) {
+      fields['Latitude'] = coords.lat
+      fields['Longitude'] = coords.lng
+    }
+  }
+  // if not verified, the link is silently dropped, nothing is stored
+}
 
     await base('Service Requests').create([{ fields }])
     return true
@@ -1126,7 +1156,54 @@ export async function respondToQuery(queryId: string, responseText: string): Pro
 export async function closeRequest(requestId: string): Promise<boolean> {
   try {
     if (!base) return false
-    await base('Service Requests').update([{ id: requestId, fields: { Status: 'Closed' } }])
+    await base('Service Requests').update([{
+      id: requestId,
+      fields: { Status: 'Closed', 'Closed Date': new Date().toISOString().split('T')[0] },
+    }])
     return true
   } catch { return false }
+}
+
+
+// ============================================================
+// PREMIUM FEATURE — Board AI Agent
+// These two functions plus the "AI Agent Sessions" Airtable table
+// and the "Board AI Agent" automation are the entire backend for
+// this feature. To remove the feature: delete these two functions,
+// delete the table, delete the automation. Nothing else references
+// AI Agent Sessions.
+// ============================================================
+export async function submitAgentQuery(email: string, prompt: string): Promise<boolean> {
+  try {
+    if (!base) return false
+    const existing = await base('AI Agent Sessions')
+      .select({ filterByFormula: `LOWER({Board Member Email}) = LOWER('${email.replace(/'/g, "\\'")}')`, maxRecords: 1 })
+      .firstPage()
+
+    if (existing.length > 0) {
+      await base('AI Agent Sessions').update([
+        { id: existing[0].id, fields: { Prompt: prompt, Response: '', Status: 'Pending' } },
+      ])
+    } else {
+      await base('AI Agent Sessions').create([
+        { fields: { 'Board Member Email': email, Prompt: prompt, Status: 'Pending' } },
+      ])
+    }
+    return true
+  } catch { return false }
+}
+
+export async function getAgentSession(email: string): Promise<AIAgentSession | null> {
+  try {
+    if (!base) return null
+    const records = await base('AI Agent Sessions')
+      .select({ filterByFormula: `LOWER({Board Member Email}) = LOWER('${email.replace(/'/g, "\\'")}')`, maxRecords: 1 })
+      .firstPage()
+    if (records.length === 0) return null
+    const statusValue = records[0].get('Status') as any
+    return {
+      status: (typeof statusValue === 'object' ? statusValue?.name : statusValue) || 'Pending',
+      response: records[0].get('Response') as string | undefined,
+    }
+  } catch { return null }
 }

@@ -1,7 +1,7 @@
 // app/(pages)/board/InsightsPanel.tsx
 'use client'
 import { useMemo } from 'react'
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis } from 'recharts'
 import type { ServiceRequest } from '@/lib/types'
 
 const BAR_COLORS = ['#c9a961', '#8a9a6f', '#4a7a7a', '#b8724a', '#8a6fb0', '#5a8ab0']
@@ -13,7 +13,9 @@ export default function InsightsPanel({ requests }: { requests: ServiceRequest[]
       const c = r.final_category || r.category_resident_selected || 'Other'
       counts[c] = (counts[c] || 0) + 1
     })
-    return Object.entries(counts).sort((a, b) => b[1] - a[1])
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
   }, [requests])
 
   const bySubmittedVia = useMemo(() => {
@@ -43,7 +45,21 @@ export default function InsightsPanel({ requests }: { requests: ServiceRequest[]
     <div className="bg-primary rounded-2xl p-5 sm:p-6 mb-10 shadow-inner">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <ChartCard title="By Category">
-          <BarList data={byCategory} />
+          <ResponsiveContainer width="100%" height={340}>
+            <BarChart data={byCategory} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
+              <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.6)' }} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={130}
+                tick={{ fontSize: 10.5, fill: 'rgba(255,255,255,0.85)' }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <Tooltip />
+              <Bar dataKey="count" fill="#c9a961" radius={[0, 3, 3, 0]} barSize={12} />
+            </BarChart>
+          </ResponsiveContainer>
         </ChartCard>
 
         <ChartCard title="By Resolution Path">
@@ -93,7 +109,7 @@ function DonutWithTotal({ data }: { data: { name: string; value: number; color: 
   return (
     <div>
       <div className="relative">
-        <ResponsiveContainer width="100%" height={180}>
+        <ResponsiveContainer width="100%" height={220}>
           <PieChart>
             <Pie data={data} dataKey="value" nameKey="name" innerRadius={55} outerRadius={78} paddingAngle={3} strokeWidth={0}>
               {data.map((d, i) => <Cell key={i} fill={d.color} />)}
@@ -101,7 +117,7 @@ function DonutWithTotal({ data }: { data: { name: string; value: number; color: 
             <Tooltip />
           </PieChart>
         </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ height: 220 }}>
           <span className="font-serif text-2xl text-white">{total}</span>
           <span className="text-[10px] uppercase tracking-wide text-white/50">Total</span>
         </div>

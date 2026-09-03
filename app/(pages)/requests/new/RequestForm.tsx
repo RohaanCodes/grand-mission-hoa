@@ -24,6 +24,7 @@ export default function RequestForm({ categories, prefill }: RequestFormProps) {
   const [phone, setPhone] = useState(prefill?.phone || '')
   const [category, setCategory] = useState('')
   const [description, setDescription] = useState('')
+  const [locationLink, setLocationLink] = useState('')
   const [isNotMe, setIsNotMe] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
@@ -50,6 +51,7 @@ export default function RequestForm({ categories, prefill }: RequestFormProps) {
       phone,
       category: category || 'Not Sure / Let System Decide',
       description,
+      locationLink: locationLink || undefined,
     })
 
     setSubmitting(false)
@@ -73,7 +75,7 @@ export default function RequestForm({ categories, prefill }: RequestFormProps) {
           Request received
         </h2>
         <p className="text-foreground/80 leading-relaxed">
-          Thanks, {requesterName.split(' ')[0] || 'there'} — we've got your
+          Thanks, {requesterName.split(' ')[0] || 'there'}, we've got your
           request and you'll hear from us shortly by email at{' '}
           <span className="font-medium">{requesterEmail}</span>.
         </p>
@@ -136,14 +138,14 @@ export default function RequestForm({ categories, prefill }: RequestFormProps) {
         </Field>
 
         <Field label="Phone" required>
-  <input
-    type="tel"
-    required
-    value={phone}
-    onChange={(e) => setPhone(e.target.value)}
-    className={inputClass}
-  />
-</Field>
+          <input
+            type="tel"
+            required
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
       </div>
 
       <Field label="Category">
@@ -168,7 +170,17 @@ export default function RequestForm({ categories, prefill }: RequestFormProps) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           className={inputClass}
-          placeholder="Tell us what's going on — the more detail, the better we can help."
+          placeholder="Tell us what's going on, the more detail, the better we can help."
+        />
+      </Field>
+
+      <Field label="Location link (optional)">
+        <input
+          type="url"
+          placeholder="Paste a Google Maps link"
+          value={locationLink}
+          onChange={(e) => setLocationLink(e.target.value)}
+          className={inputClass}
         />
       </Field>
 

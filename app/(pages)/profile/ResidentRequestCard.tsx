@@ -1,7 +1,7 @@
 // app/(pages)/profile/ResidentRequestCard.tsx
 'use client'
 import { motion } from 'framer-motion'
-import { Wrench, Volume2, Palette, Receipt, Trees, Dumbbell, HelpCircle, LucideIcon } from 'lucide-react'
+import { Wrench, Volume2, Palette, Receipt, Trees, Dumbbell, HelpCircle, MapPin, LucideIcon } from 'lucide-react'
 import RequestStatusBadge from './RequestStatusBadge'
 import type { ServiceRequest } from '@/lib/types'
 
@@ -41,6 +41,19 @@ export default function ResidentRequestCard({ req, index }: { req: ServiceReques
             <RequestStatusBadge status={req.status || 'New'} />
           </div>
           <p className="text-foreground/75 text-sm leading-relaxed">{req.description}</p>
+
+          {req.location_link && (
+            <a
+              href={req.location_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary/70 hover:text-primary mt-2"
+            >
+              <MapPin className="w-3.5 h-3.5" strokeWidth={2} />
+              View location
+            </a>
+          )}
+
           {req.submitted_date && (
             <p className="text-foreground/40 text-xs mt-3">
               Submitted {new Date(req.submitted_date).toLocaleDateString()}

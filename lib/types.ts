@@ -151,7 +151,7 @@ export interface ServiceRequestInput {
   phone?: string
   category?: string
   description: string
- 
+  locationLink?: string
 }
 
 export interface ServiceRequest {
@@ -173,6 +173,8 @@ export interface ServiceRequest {
   proposed_solution?: string
   estimated_cost?: string
   management_due_date?: string
+  location_link?: string
+  closed_date?: string
 }
 
 export interface ResidentProfile {
@@ -201,4 +203,15 @@ export interface RequestQuery {
   responseText?: string
   answered: boolean
   createdTime: string
+}
+
+
+// ============================================================
+// PREMIUM FEATURE — Board AI Agent
+// Safe to delete this interface if the feature is not shipped.
+// Nothing else in the app depends on it.
+// ============================================================
+export interface AIAgentSession {
+  status: 'Pending' | 'Complete' | 'Error'
+  response?: string
 }

@@ -25,16 +25,25 @@ export default async function BoardDashboardPage() {
             <h1 className="font-serif text-2xl sm:text-3xl text-primary mb-0.5">Board Dashboard</h1>
             <p className="text-foreground/50 text-sm">Signed in as {boardMember.name}</p>
           </div>
+
+          <a  href="https://airtable.com/app3AwDclb6uHhH1J/shrnC68Kokab4V81y"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="text-sm text-primary/70 hover:text-primary underline underline-offset-2"
+  >
+    Share feedback
+  </a>
           <a
            href="/board/submit"
-  className="bg-primary text-primary-foreground px-4 py-2.5 rounded-lg font-medium text-sm text-center w-full sm:w-auto hover:opacity-90 transition-opacity"
->
-  Submit a Request
-</a>
+          className="bg-primary text-primary-foreground px-4 py-2.5 rounded-lg font-medium text-sm text-center w-full sm:w-auto hover:opacity-90 transition-opacity"
+          >
+  
+          Submit a Request
+          </a>
         </div>
 
         <BoardDashboard requests={requests} currentEmail={boardMember.email} currentName={boardMember.name} viewerRole="board" />
-        <BoardAIAssistant />
+       <BoardAIAssistant currentEmail={boardMember.email} />
       </section>
     </main>
   )

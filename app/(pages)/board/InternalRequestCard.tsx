@@ -204,7 +204,7 @@ export default function InternalRequestCard({
                 onClick={() => setConfirming(true)}
                 className="text-xs font-medium text-foreground/50 hover:text-destructive border border-border bg-card rounded-full px-2.5 py-1 transition-colors"
               >
-                Close
+                Mark as Closed
               </button>
             )}
           </div>

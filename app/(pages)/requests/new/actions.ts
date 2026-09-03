@@ -1,11 +1,15 @@
 'use server'
-
 import { submitServiceRequest } from '@/lib/airtable'
-import type { ServiceRequestInput } from '@/lib/types'
 
-export async function submitRequestAction(
-  data: ServiceRequestInput
-): Promise<{ success: boolean }> {
+export async function submitRequestAction(data: {
+  requesterName: string
+  requesterEmail: string
+  unitAddress: string
+  phone?: string
+  category?: string
+  description: string
+  locationLink?: string
+}) {
   const success = await submitServiceRequest(data)
   return { success }
 }

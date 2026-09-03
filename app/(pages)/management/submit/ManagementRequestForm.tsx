@@ -9,6 +9,7 @@ export default function ManagementRequestForm({ categories }: { categories: Requ
   const [proposedSolution, setProposedSolution] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [estimatedCost, setEstimatedCost] = useState('')
+  const [locationLink, setLocationLink] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
@@ -17,6 +18,7 @@ export default function ManagementRequestForm({ categories }: { categories: Requ
     setSubmitting(true)
     const result = await submitManagementRequestAction({
       category, description, proposedSolution, dueDate, estimatedCost,
+      locationLink: locationLink || undefined,
     })
     setSubmitting(false)
     if (result.success) setSubmitted(true)
@@ -53,7 +55,21 @@ export default function ManagementRequestForm({ categories }: { categories: Requ
           <input type="text" value={estimatedCost} onChange={(e) => setEstimatedCost(e.target.value)} className="w-full border border-border rounded-md px-4 py-2.5 bg-background" />
         </label>
       </div>
-      <button type="submit" disabled={submitting} className="w-full bg-accent text-accent-foreground font-medium py-3 rounded-md disabled:opacity-60">
+      <label className="block">
+        <span className="block text-sm font-medium mb-2">Location link (optional)</span>
+        <input
+          type="url"
+          placeholder="Paste a Google Maps link"
+          value={locationLink}
+          onChange={(e) => setLocationLink(e.target.value)}
+          className="w-full border border-border rounded-md px-4 py-2.5 bg-background"
+        />
+      </label>
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full bg-accent text-accent-foreground font-medium py-3 rounded-md disabled:opacity-60"
+      >
         {submitting ? 'Logging…' : 'Log Item'}
       </button>
     </form>

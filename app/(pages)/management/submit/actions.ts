@@ -8,6 +8,7 @@ export async function submitManagementRequestAction(data: {
   proposedSolution?: string
   dueDate?: string
   estimatedCost?: string
+  locationLink?: string
 }) {
   const cookieStore = await cookies()
   const mgmtId = cookieStore.get('mgmt_token')?.value

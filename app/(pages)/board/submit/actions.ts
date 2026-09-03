@@ -2,7 +2,11 @@
 import { cookies } from 'next/headers'
 import { getBoardMemberById, submitServiceRequest } from '@/lib/airtable'
 
-export async function submitBoardRequestAction(data: { category: string; description: string }) {
+export async function submitBoardRequestAction(data: {
+  category: string
+  description: string
+  locationLink?: string
+}) {
   const cookieStore = await cookies()
   const id = cookieStore.get('board_token')?.value
   if (!id) return { success: false }
@@ -18,6 +22,7 @@ export async function submitBoardRequestAction(data: { category: string; descrip
       phone: boardMember.phone || '',
       category: data.category,
       description: data.description,
+      locationLink: data.locationLink,
     },
     'Board Member'
   )
