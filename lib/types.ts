@@ -175,6 +175,8 @@ export interface ServiceRequest {
   management_due_date?: string
   location_link?: string
   closed_date?: string
+  latitude?: number
+  longitude?: number
 }
 
 export interface ResidentProfile {

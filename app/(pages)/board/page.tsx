@@ -26,24 +26,34 @@ export default async function BoardDashboardPage() {
             <p className="text-foreground/50 text-sm">Signed in as {boardMember.name}</p>
           </div>
 
-          <a  href="https://airtable.com/app3AwDclb6uHhH1J/shrnC68Kokab4V81y"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-sm text-primary/70 hover:text-primary underline underline-offset-2"
-  >
-    Share feedback
-  </a>
-          <a
-           href="/board/submit"
-          className="bg-primary text-primary-foreground px-4 py-2.5 rounded-lg font-medium text-sm text-center w-full sm:w-auto hover:opacity-90 transition-opacity"
-          >
-  
-          Submit a Request
-          </a>
+          <div className="flex items-center gap-4 flex-wrap">
+            <a
+              href="/board/map"
+              className="text-sm text-primary/70 hover:text-primary underline underline-offset-2"
+            >
+              View Map
+            </a>
+
+            <a
+              href="https://airtable.com/app3AwDclb6uHhH1J/shrnC68Kokab4V81y"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-primary/70 hover:text-primary underline underline-offset-2"
+            >
+              Share feedback
+            </a>
+
+            <a
+              href="/board/submit"
+              className="bg-primary text-primary-foreground px-4 py-2.5 rounded-lg font-medium text-sm text-center w-full sm:w-auto hover:opacity-90 transition-opacity"
+            >
+              Submit a Request
+            </a>
+          </div>
         </div>
 
         <BoardDashboard requests={requests} currentEmail={boardMember.email} currentName={boardMember.name} viewerRole="board" />
-       <BoardAIAssistant currentEmail={boardMember.email} />
+        <BoardAIAssistant currentEmail={boardMember.email} />
       </section>
     </main>
   )

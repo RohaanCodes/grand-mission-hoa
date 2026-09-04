@@ -973,8 +973,9 @@ export async function getAllServiceRequests(includePrivateNotes: boolean = false
         estimated_cost: record.get('Estimated Cost') as string | undefined,
         management_due_date: record.get('Management Due Date') as string | undefined,
         location_link: record.get('Location Link') as string | undefined,
-        closed_date: record.get('Closed Date') as string | undefined, 
-        
+        latitude: record.get('Latitude') as number | undefined,
+        longitude: record.get('Longitude') as number | undefined,
+        closed_date: record.get('Closed Date') as string | undefined,
       }
     })
   } catch (error: any) {
