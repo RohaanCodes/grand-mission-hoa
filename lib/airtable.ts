@@ -765,20 +765,19 @@ export async function submitServiceRequest(
       'Category (Resident Selected)': data.category || 'Not Sure / Let System Decide',
       Description: data.description,
       'Submitted Via': submittedVia,
+      Status: 'New',
+      'Submitted Date': new Date().toISOString().split('T')[0],
+
     }
 
     if (data.locationLink) {
-  const { verified, resolvedUrl } = await verifyAndResolveMapsLink(data.locationLink)
-  if (verified && resolvedUrl) {
-    fields['Location Link'] = resolvedUrl
-    const coords = await extractCoordsFromMapsLink(data.locationLink)
-    if (coords) {
-      fields['Latitude'] = coords.lat
-      fields['Longitude'] = coords.lng
+      fields['Location Link'] = data.locationLink
+      const coords = await extractCoordsFromMapsLink(data.locationLink)
+      if (coords) {
+        fields['Latitude'] = coords.lat
+        fields['Longitude'] = coords.lng
+      }
     }
-  }
-  // if not verified, the link is silently dropped, nothing is stored
-}
 
     await base('Service Requests').create([{ fields }])
     return true
@@ -1063,6 +1062,7 @@ export async function submitManagementRequest(data: {
       'Submitted Via': 'Management Company',
       'Routing Decision': 'Management',
       Status: 'Agent In Progress',
+      'Submitted Date': new Date().toISOString().split('T')[0],
       'Triage Started Date': new Date().toISOString().split('T')[0],
       'Triage Completed Date': new Date().toISOString().split('T')[0],
     }
