@@ -41,23 +41,26 @@ export default function InsightsPanel({ requests }: { requests: ServiceRequest[]
     ].filter((d) => d.value > 0)
   }, [requests])
 
+  const categoryHeight = Math.max(byCategory.length * 26, 100)
+
   return (
     <div className="bg-primary rounded-2xl p-5 sm:p-6 mb-10 shadow-inner">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <ChartCard title="By Category">
-          <ResponsiveContainer width="100%" height={340}>
+          <ResponsiveContainer width="100%" height={categoryHeight}>
             <BarChart data={byCategory} layout="vertical" margin={{ left: 8, right: 16, top: 4, bottom: 4 }}>
               <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.6)' }} />
               <YAxis
                 type="category"
                 dataKey="name"
-                width={130}
-                tick={{ fontSize: 10.5, fill: 'rgba(255,255,255,0.85)' }}
+                width={150}
+                tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.85)' }}
                 axisLine={false}
                 tickLine={false}
+                interval={0}
               />
               <Tooltip />
-              <Bar dataKey="count" fill="#c9a961" radius={[0, 3, 3, 0]} barSize={12} />
+              <Bar dataKey="count" fill="#c9a961" radius={[0, 3, 3, 0]} barSize={14} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -109,7 +112,7 @@ function DonutWithTotal({ data }: { data: { name: string; value: number; color: 
   return (
     <div>
       <div className="relative">
-        <ResponsiveContainer width="100%" height={220}>
+        <ResponsiveContainer width="100%" height={200}>
           <PieChart>
             <Pie data={data} dataKey="value" nameKey="name" innerRadius={55} outerRadius={78} paddingAngle={3} strokeWidth={0}>
               {data.map((d, i) => <Cell key={i} fill={d.color} />)}
@@ -117,7 +120,7 @@ function DonutWithTotal({ data }: { data: { name: string; value: number; color: 
             <Tooltip />
           </PieChart>
         </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ height: 220 }}>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none" style={{ height: 200 }}>
           <span className="font-serif text-2xl text-white">{total}</span>
           <span className="text-[10px] uppercase tracking-wide text-white/50">Total</span>
         </div>

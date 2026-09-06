@@ -177,6 +177,8 @@ export interface ServiceRequest {
   closed_date?: string
   latitude?: number
   longitude?: number
+  possible_duplicate?: boolean
+  ai_classification_notes?: string
 }
 
 export interface ResidentProfile {

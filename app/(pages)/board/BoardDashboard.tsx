@@ -2,14 +2,18 @@
 'use client'
 import { useState, useMemo } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Inbox, Clock, CheckCircle2, BarChart3, ListChecks, ChevronDown } from 'lucide-react'
+import { Inbox, Clock, CheckCircle2, BarChart3, ListChecks, ChevronDown, Rows3, LayoutGrid, List } from 'lucide-react'
 import InternalRequestCard from './InternalRequestCard'
 import InsightsPanel from './InsightsPanel'
 import TimelineChart from './TimelineChart'
+import DuplicatesPanel from './DuplicatesPanel'
+import RequestListRow from './RequestListRow'
+import RequestDetailDrawer from './RequestDetailDrawer'
 import type { ServiceRequest } from '@/lib/types'
 
 type SourceFilter = 'all' | 'mine' | 'board' | 'residents' | 'management'
 type StatusFilter = 'open' | 'agent_in_progress' | 'awaiting_management' | 'awaiting_resident' | 'resolved' | 'closed_ai' | 'everything'
+type ViewMode = 'grid1' | 'grid2' | 'list'
 
 const SOURCE_TABS: { key: SourceFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -59,6 +63,8 @@ export default function BoardDashboard({
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('open')
   const [analyticsOpen, setAnalyticsOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<ViewMode>('grid1')
+  const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null)
 
   const filtered = useMemo(() => {
     let result = requests
@@ -90,7 +96,8 @@ export default function BoardDashboard({
         <StatCard icon={<CheckCircle2 className="w-5 h-5" strokeWidth={1.75} />} value={closedCount} label="Closed" tone="secondary" />
       </div>
 
-      {/* ANALYTICS — collapsed by default, toggled open on demand */}
+      <DuplicatesPanel requests={requests} />
+
       <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
         <button
           onClick={() => setAnalyticsOpen((v) => !v)}
@@ -101,7 +108,7 @@ export default function BoardDashboard({
               <BarChart3 className="w-4 h-4" strokeWidth={2} />
             </span>
             <h2 className="font-serif text-base text-primary">Analytics</h2>
-            <span className="text-xs text-foreground/40">{analyticsOpen ? 'Click to hide' : 'Click to show charts and trends'}</span>
+            <span className="text-xs text-foreground/40 hidden sm:inline">{analyticsOpen ? 'Click to hide' : 'Click to show'}</span>
           </div>
           <ChevronDown className={`w-4 h-4 text-foreground/50 transition-transform flex-shrink-0 ${analyticsOpen ? 'rotate-180' : ''}`} />
         </button>
@@ -126,7 +133,6 @@ export default function BoardDashboard({
         </AnimatePresence>
       </div>
 
-      {/* REQUESTS */}
       <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
         <div className="px-5 sm:px-6 py-4 border-b border-border flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-2.5">
@@ -161,6 +167,31 @@ export default function BoardDashboard({
                 <option key={opt.key} value={opt.key}>{opt.label}</option>
               ))}
             </select>
+
+            {/* VIEW MODE TOGGLE */}
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('grid1')}
+                title="One column"
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid1' ? 'bg-card shadow-sm text-primary' : 'text-foreground/40 hover:text-foreground/60'}`}
+              >
+                <Rows3 className="w-4 h-4" strokeWidth={2} />
+              </button>
+              <button
+                onClick={() => setViewMode('grid2')}
+                title="Two columns"
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'grid2' ? 'bg-card shadow-sm text-primary' : 'text-foreground/40 hover:text-foreground/60'}`}
+              >
+                <LayoutGrid className="w-4 h-4" strokeWidth={2} />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                title="Compact list"
+                className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-card shadow-sm text-primary' : 'text-foreground/40 hover:text-foreground/60'}`}
+              >
+                <List className="w-4 h-4" strokeWidth={2} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -169,8 +200,19 @@ export default function BoardDashboard({
             <div className="bg-muted/50 rounded-lg p-10 text-center">
               <p className="text-foreground/50 text-sm">No requests match these filters.</p>
             </div>
+          ) : viewMode === 'list' ? (
+            <div className="divide-y divide-border">
+              {filtered.map((req) => (
+                <RequestListRow
+                  key={req.id}
+                  req={req}
+                  onClick={() => setSelectedRequest(req)}
+                  isSelected={selectedRequest?.id === req.id}
+                />
+              ))}
+            </div>
           ) : (
-            <div className="space-y-2.5">
+            <div className={`grid grid-cols-1 gap-3 ${viewMode === 'grid2' ? 'xl:grid-cols-2' : ''}`}>
               {filtered.map((req, i) => (
                 <InternalRequestCard
                   key={req.id}
@@ -185,6 +227,14 @@ export default function BoardDashboard({
           )}
         </div>
       </div>
+
+      <RequestDetailDrawer
+        request={selectedRequest}
+        onClose={() => setSelectedRequest(null)}
+        viewerRole={viewerRole}
+        currentName={currentName}
+        currentEmail={currentEmail}
+      />
     </div>
   )
 }
@@ -201,18 +251,30 @@ function StatCard({
   tone: 'primary' | 'accent' | 'secondary'
 }) {
   const toneClasses = {
-    primary: 'bg-primary/10 text-primary',
-    accent: 'bg-accent/15 text-[#b8985a]',
-    secondary: 'bg-secondary/10 text-secondary',
+    primary: 'bg-primary/8 border-primary/15',
+    accent: 'bg-accent/12 border-accent/25',
+    secondary: 'bg-secondary/10 border-secondary/20',
+  }[tone]
+
+  const iconClasses = {
+    primary: 'bg-primary text-primary-foreground',
+    accent: 'bg-[#c9a961] text-white',
+    secondary: 'bg-secondary text-secondary-foreground',
+  }[tone]
+
+  const valueClasses = {
+    primary: 'text-primary',
+    accent: 'text-[#8a6d2f]',
+    secondary: 'text-secondary',
   }[tone]
 
   return (
-    <div className="bg-card border border-border rounded-xl p-4 flex items-center gap-3.5 shadow-sm">
-      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${toneClasses}`}>
+    <div className={`border rounded-xl p-4 flex items-center gap-3.5 shadow-sm ${toneClasses}`}>
+      <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${iconClasses}`}>
         {icon}
       </div>
       <div>
-        <p className="font-serif text-xl text-primary leading-none mb-1">{value}</p>
+        <p className={`font-serif text-xl leading-none mb-1 ${valueClasses}`}>{value}</p>
         <p className="text-xs uppercase tracking-wide text-foreground/50">{label}</p>
       </div>
     </div>

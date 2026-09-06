@@ -975,6 +975,8 @@ export async function getAllServiceRequests(includePrivateNotes: boolean = false
         latitude: record.get('Latitude') as number | undefined,
         longitude: record.get('Longitude') as number | undefined,
         closed_date: record.get('Closed Date') as string | undefined,
+        possible_duplicate: !!record.get('Possible Duplicate'),
+        ai_classification_notes: record.get('AI Classification Notes') as string | undefined,
       }
     })
   } catch (error: any) {
