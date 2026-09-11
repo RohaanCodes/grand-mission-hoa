@@ -1,5 +1,5 @@
 'use server'
-import { getQueriesForRequest, submitRequestQuery, respondToQuery, closeRequest, updatePrivateNote } from '@/lib/airtable'
+import { getQueriesForRequest, submitRequestQuery, respondToQuery, closeRequest, updatePrivateNote, getAllBoardMembers, getAllManagementUsers } from '@/lib/airtable'
 
 export async function getQueriesAction(requestIdNumber: number) {
   return getQueriesForRequest(requestIdNumber)
@@ -24,4 +24,18 @@ export async function closeRequestAction(requestId: string) {
 
 export async function updatePrivateNoteAction(requestId: string, notes: string) {
   return { success: await updatePrivateNote(requestId, notes) }
+}
+
+export async function getPeoplePhotosAction(): Promise<Record<string, string>> {
+  const [boardMembers, mgmtUsers] = await Promise.all([
+    getAllBoardMembers(),
+    getAllManagementUsers(),
+  ])
+  const photoMap: Record<string, string> = {}
+  ;[...boardMembers, ...mgmtUsers].forEach((person) => {
+    if (person.email && person.photoUrl) {
+      photoMap[person.email.toLowerCase()] = person.photoUrl
+    }
+  })
+  return photoMap
 }

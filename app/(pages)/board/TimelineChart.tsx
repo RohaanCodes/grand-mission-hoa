@@ -1,12 +1,20 @@
 // app/(pages)/board/TimelineChart.tsx
 'use client'
+
 import { useMemo } from 'react'
-import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts'
+import {
+  ComposedChart,
+  Area,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  CartesianGrid,
+} from 'recharts'
 import type { ServiceRequest } from '@/lib/types'
 
-// Uses local date components (getFullYear/getMonth/getDate) rather than
-// toISOString(), which forces UTC and shifts evening submissions into the
-// next calendar day for any timezone behind UTC.
 function localDayKey(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -71,38 +79,98 @@ export default function TimelineChart({ requests }: { requests: ServiceRequest[]
   }, [chartData])
 
   return (
-    <div>
-      <p className="text-sm text-foreground/60 mb-4">Requests submitted vs. closed, last 30 days</p>
+    <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5">
+      <p className="text-sm font-medium text-slate-700 mb-5">
+        Requests submitted vs. closed, last 30 days
+      </p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-        <StatBox label="Submitted" value={stats.submitted} />
-        <StatBox label="Closed" value={stats.closed} />
-        <StatBox label="Open Now" value={stats.open} />
-        <StatBox label="Close Rate" value={`${stats.closeRate}%`} />
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <StatBox label="Submitted" value={stats.submitted} color="text-blue-600" />
+        <StatBox label="Closed" value={stats.closed} color="text-emerald-600" />
+        <StatBox label="Open Now" value={stats.open} color="text-amber-600" />
+        <StatBox label="Close Rate" value={`${stats.closeRate}%`} color="text-violet-600" />
       </div>
 
+      {/* Chart */}
       <ResponsiveContainer width="100%" height={280}>
         <ComposedChart data={chartData} margin={{ left: -10, right: 10 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e1d8" />
-          <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-          <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
-          <Tooltip />
-          <Legend wrapperStyle={{ fontSize: 12 }} />
-          <Area type="monotone" dataKey="closed" stackId="backlog" stroke="none" fill="transparent" legendType="none" />
-          <Area type="monotone" dataKey="backlog" stackId="backlog" stroke="none" fill="#c9c5b8" fillOpacity={0.5} name="Still Open" />
-          <Line type="monotone" dataKey="submitted" name="Submitted" stroke="#1a3a52" strokeWidth={2.5} dot={false} />
-          <Line type="monotone" dataKey="closed" name="Closed" stroke="#4a7a7a" strokeWidth={2.5} strokeDasharray="6 4" dot={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+          <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+          
+          <Tooltip
+            contentStyle={{
+              borderRadius: '10px',
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
+              fontSize: '12px',
+              color: '#1e293b', // dark text so everything is readable
+            }}
+            itemStyle={{ color: '#1e293b' }}
+            labelStyle={{ color: '#64748b', marginBottom: 4 }}
+          />
+
+          <Legend
+            wrapperStyle={{ fontSize: 12, color: '#334155' }}
+            formatter={(value) => (
+              <span style={{ color: '#334155' }}>{value}</span>
+            )}
+          />
+
+          <Area
+            type="monotone"
+            dataKey="closed"
+            stackId="backlog"
+            stroke="none"
+            fill="transparent"
+            legendType="none"
+          />
+          <Area
+            type="monotone"
+            dataKey="backlog"
+            stackId="backlog"
+            stroke="none"
+            fill="#94a3b8"
+            fillOpacity={0.35}
+            name="Still Open"
+          />
+          <Line
+            type="monotone"
+            dataKey="submitted"
+            name="Submitted"
+            stroke="#2563eb"
+            strokeWidth={2.5}
+            dot={false}
+          />
+          <Line
+            type="monotone"
+            dataKey="closed"
+            name="Closed"
+            stroke="#16a34a"
+            strokeWidth={2.5}
+            strokeDasharray="6 4"
+            dot={false}
+          />
         </ComposedChart>
       </ResponsiveContainer>
     </div>
   )
 }
 
-function StatBox({ label, value }: { label: string; value: string | number }) {
+function StatBox({
+  label,
+  value,
+  color,
+}: {
+  label: string
+  value: string | number
+  color: string
+}) {
   return (
-    <div className="bg-background border border-border rounded-lg p-3">
-      <p className="text-xs text-foreground/50 mb-1">{label}</p>
-      <p className="font-serif text-xl text-primary">{value}</p>
+    <div className="bg-slate-50/80 border border-slate-100 rounded-xl p-3.5">
+      <p className="text-xs text-slate-500 mb-1.5">{label}</p>
+      <p className={`text-xl font-bold tabular-nums ${color}`}>{value}</p>
     </div>
   )
 }

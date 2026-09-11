@@ -1,24 +1,22 @@
-// app/(pages)/board/map/page.tsx
+// app/(pages)/board/profile/page.tsx
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, MapPin } from 'lucide-react'
-import { getAllServiceRequests, getBoardMemberById } from '@/lib/airtable'
-import MapView from '../MapLoader'
+import { ArrowLeft, UserCircle } from 'lucide-react'
+import { getBoardMemberById } from '@/lib/airtable'
+import ProfileForm from '../ProfileForm'
 import Sidebar from '../Sidebar'
 import BottomNav from '../BottomNav'
 
-export const metadata = { title: 'Request Map | Grand Mission HOA' }
+export const metadata = { title: 'Profile | Grand Mission HOA' }
 
-export default async function BoardMapPage() {
+export default async function BoardProfilePage() {
   const cookieStore = await cookies()
   const id = cookieStore.get('board_token')?.value
   if (!id) redirect('/board/login')
 
   const boardMember = await getBoardMemberById(id)
   if (!boardMember) redirect('/board/login')
-
-  const requests = await getAllServiceRequests()
 
   return (
     <div className="dashboard flex min-h-screen bg-slate-50">
@@ -30,17 +28,20 @@ export default async function BoardMapPage() {
             <ArrowLeft size={16} strokeWidth={1.8} /> Dashboard
           </Link>
 
-          <div className="flex items-center gap-3 mb-1">
+          <div className="flex items-center gap-3 mb-6">
             <span className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-              <MapPin className="w-4.5 h-4.5" strokeWidth={2} />
+              <UserCircle className="w-4.5 h-4.5" strokeWidth={2} />
             </span>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Request Map</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Profile</h1>
           </div>
-          <p className="text-slate-500 text-sm mb-6 ml-12">Signed in as {boardMember.name}</p>
 
-          <div className="bg-white border border-slate-100 rounded-2xl shadow-[0_4px_6px_-1px_rgba(148,163,184,0.1),0_2px_4px_-1px_rgba(148,163,184,0.06)] p-5 sm:p-6">
-            <MapView requests={requests} />
-          </div>
+          <ProfileForm
+            role="board"
+            recordId={boardMember.id}
+            name={boardMember.name}
+            email={boardMember.email}
+            photoUrl={boardMember.photoUrl}
+          />
         </section>
       </main>
 

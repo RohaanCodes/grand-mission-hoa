@@ -1,11 +1,14 @@
+// app/(pages)/board/submit/actions.ts
 'use server'
 import { cookies } from 'next/headers'
-import { getBoardMemberById, submitServiceRequest } from '@/lib/airtable'
+import { getBoardMemberById, submitServiceRequest, toggleStar } from '@/lib/airtable'
 
 export async function submitBoardRequestAction(data: {
   category: string
   description: string
   locationLink?: string
+  votingOpen?: boolean
+  starThis?: boolean
 }) {
   const cookieStore = await cookies()
   const id = cookieStore.get('board_token')?.value
@@ -14,7 +17,7 @@ export async function submitBoardRequestAction(data: {
   const boardMember = await getBoardMemberById(id)
   if (!boardMember) return { success: false }
 
-  const success = await submitServiceRequest(
+  const result = await submitServiceRequest(
     {
       requesterName: boardMember.name,
       requesterEmail: boardMember.email,
@@ -23,8 +26,14 @@ export async function submitBoardRequestAction(data: {
       category: data.category,
       description: data.description,
       locationLink: data.locationLink,
+      votingOpen: data.votingOpen,
     },
     'Board Member'
   )
-  return { success }
+
+  if (result.success && result.recordId && data.starThis) {
+    await toggleStar(result.recordId, boardMember.email, boardMember.name)
+  }
+
+  return { success: result.success }
 }

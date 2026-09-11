@@ -1,16 +1,17 @@
-// app/(pages)/board/map/page.tsx
+// app/(pages)/board/analytics/page.tsx
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, MapPin } from 'lucide-react'
+import { ArrowLeft, BarChart3 } from 'lucide-react'
 import { getAllServiceRequests, getBoardMemberById } from '@/lib/airtable'
-import MapView from '../MapLoader'
+import InsightsPanel from '../InsightsPanel'
+import TimelineChart from '../TimelineChart'
 import Sidebar from '../Sidebar'
 import BottomNav from '../BottomNav'
 
-export const metadata = { title: 'Request Map | Grand Mission HOA' }
+export const metadata = { title: 'Analytics | Grand Mission HOA' }
 
-export default async function BoardMapPage() {
+export default async function BoardAnalyticsPage() {
   const cookieStore = await cookies()
   const id = cookieStore.get('board_token')?.value
   if (!id) redirect('/board/login')
@@ -25,21 +26,27 @@ export default async function BoardMapPage() {
       <Sidebar basePath="/board" />
 
       <main className="flex-1 min-w-0 pb-20 lg:pb-0">
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <Link href="/board" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 mb-4 lg:hidden transition-colors">
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <Link
+            href="/board"
+            className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 mb-4 lg:hidden transition-colors"
+          >
             <ArrowLeft size={16} strokeWidth={1.8} /> Dashboard
           </Link>
 
-          <div className="flex items-center gap-3 mb-1">
+          <div className="flex items-center gap-3 mb-6">
             <span className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-              <MapPin className="w-4.5 h-4.5" strokeWidth={2} />
+              <BarChart3 className="w-4.5 h-4.5" strokeWidth={2} />
             </span>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Request Map</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              Analytics
+            </h1>
           </div>
-          <p className="text-slate-500 text-sm mb-6 ml-12">Signed in as {boardMember.name}</p>
 
-          <div className="bg-white border border-slate-100 rounded-2xl shadow-[0_4px_6px_-1px_rgba(148,163,184,0.1),0_2px_4px_-1px_rgba(148,163,184,0.06)] p-5 sm:p-6">
-            <MapView requests={requests} />
+          {/* Cards now sit directly on the cool grey background */}
+          <div className="space-y-6">
+            <InsightsPanel requests={requests} />
+            <TimelineChart requests={requests} />
           </div>
         </section>
       </main>

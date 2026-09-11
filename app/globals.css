@@ -140,5 +140,20 @@
   }
 }
 
+/* Dashboard headings intentionally sit OUTSIDE @layer base: unlayered
+   rules always beat layered ones in the CSS cascade, regardless of
+   specificity or source order, so this reliably wins over the serif
+   rule above without fragile specificity tricks. */
+.dashboard h1,
+.dashboard h2,
+.dashboard h3,
+.dashboard h4 {
+  font-family: var(--font-sans);
+  font-weight: inherit;
+  letter-spacing: normal;
+  font-size: inherit;
+  line-height: inherit;
+}
+
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

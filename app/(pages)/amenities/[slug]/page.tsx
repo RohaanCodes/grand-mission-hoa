@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { getAmenityBySlug } from '@/lib/airtable'
 import type { Amenity, AirtableAttachment } from '@/lib/types'
-import { ArrowLeft, Clock, Tag, Phone, Building2 } from 'lucide-react'
+import { ArrowLeft, Clock, Tag, Phone, Building2, AlertCircle } from 'lucide-react'
 
 export default function AmenityDetailPage() {
   const params = useParams()
@@ -145,7 +145,25 @@ export default function AmenityDetailPage() {
                 <span>{amenity.hours}</span>
               </div>
             )}
+            {amenity.status && amenity.status !== 'Open' && (
+              <div
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${
+                  amenity.status === 'Closed'
+                    ? 'bg-red-50 text-red-700 border-red-200/60'
+                    : 'bg-amber-50 text-amber-700 border-amber-200/60'
+                }`}
+              >
+                <AlertCircle className="w-3.5 h-3.5" />
+                <span>{amenity.status === 'Under Maintenance' ? 'Under Maintenance' : 'Currently Closed'}</span>
+              </div>
+            )}
           </div>
+
+          {amenity.status && amenity.status !== 'Open' && amenity.statusNote && (
+            <p className="text-sm text-slate-600 bg-slate-50 border border-slate-200/60 rounded-xl px-4 py-3 leading-relaxed">
+              {amenity.statusNote}
+            </p>
+          )}
         </div>
 
         {/* Description */}

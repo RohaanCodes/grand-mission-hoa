@@ -27,10 +27,12 @@ export interface Amenity {
   slug: string
   description: string
   hours?: string
-  image?: AirtableAttachment[]           // ← Changed to Attachment field
+  image?: AirtableAttachment[]
   category?: string
+  status?: string
+  visibility?: string
+  statusNote?: string
 }
-
 export interface DocumentAccessRequest {
   id: string;
   Email: string;
@@ -152,6 +154,7 @@ export interface ServiceRequestInput {
   category?: string
   description: string
   locationLink?: string
+  votingOpen?: boolean
 }
 
 export interface ServiceRequest {
@@ -179,6 +182,8 @@ export interface ServiceRequest {
   longitude?: number
   possible_duplicate?: boolean
   ai_classification_notes?: string
+  voting_open?: boolean
+  vote_outcome?: string
 }
 
 export interface ResidentProfile {
@@ -198,12 +203,14 @@ export interface BoardMember {
   email: string
   phone?: string
   role?: string
+  photoUrl?: string
 }
 
 export interface RequestQuery {
   id: string
   queryText: string
   askedByName: string
+  askedByEmail: string
   responseText?: string
   answered: boolean
   createdTime: string
@@ -218,4 +225,26 @@ export interface RequestQuery {
 export interface AIAgentSession {
   status: 'Pending' | 'Complete' | 'Error'
   response?: string
+}
+
+
+// new type
+export interface RequestVote {
+  id: string
+  boardMemberId: string
+  boardMemberName: string
+  vote: 'Approve' | 'Disapprove'
+}
+
+// asset management
+
+export interface Asset {
+  id: string
+  name: string
+  category: string
+  status: 'Open' | 'Closed' | 'Under Maintenance'
+  visibility: 'Board Only' | 'Board & Residents'
+  notes?: string
+  lastUpdatedBy?: string
+  statusNote?: string
 }

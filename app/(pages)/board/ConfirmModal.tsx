@@ -36,28 +36,28 @@ export default function ConfirmModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.15 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[90%] max-w-sm bg-card border border-border rounded-2xl shadow-2xl p-6"
+            className="dashboard fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[90%] max-w-sm bg-white border border-slate-200/80 rounded-2xl shadow-xl p-6"
           >
             <div className="flex items-start gap-3 mb-4">
-              <span className="w-9 h-9 rounded-full bg-accent/15 text-[#b8985a] flex items-center justify-center flex-shrink-0">
+              <span className="w-9 h-9 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle className="w-4.5 h-4.5" strokeWidth={2} />
               </span>
               <div>
-                <h3 className="font-serif text-lg text-primary mb-1">{title}</h3>
-                <p className="text-sm text-foreground/65 leading-relaxed">{description}</p>
+                <h3 className="text-lg font-semibold text-slate-900 mb-1">{title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
               </div>
             </div>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={onCancel}
-                className="px-4 py-2 rounded-md text-sm font-medium text-foreground/60 hover:bg-muted transition-colors"
+                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={onConfirm}
                 disabled={loading}
-                className="px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground disabled:opacity-60"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-60"
               >
                 {loading ? 'Working…' : confirmLabel}
               </button>

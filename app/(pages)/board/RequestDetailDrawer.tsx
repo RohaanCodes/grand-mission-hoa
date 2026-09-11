@@ -34,15 +34,15 @@ export default function RequestDetailDrawer({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.25 }}
-            className="fixed top-0 right-0 h-full w-full sm:w-[440px] bg-muted/40 z-50 overflow-y-auto shadow-2xl"
+            className="dashboard fixed top-0 right-0 h-full w-full sm:w-[440px] bg-slate-50 z-50 overflow-y-auto shadow-2xl"
           >
-            <div className="sticky top-0 bg-card border-b border-border px-5 py-4 flex items-center justify-between z-10">
-              <h2 className="font-serif text-base text-primary">Request Detail</h2>
+            <div className="sticky top-0 bg-white border-b border-slate-100 px-5 py-4 flex items-center justify-between z-10">
+              <h2 className="text-base font-semibold text-slate-900">Request Detail</h2>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4 text-foreground/60" strokeWidth={2} />
+                <X className="w-4 h-4 text-slate-500" strokeWidth={2} />
               </button>
             </div>
             <div className="p-4">

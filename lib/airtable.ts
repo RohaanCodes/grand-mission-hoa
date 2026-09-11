@@ -17,7 +17,10 @@ import type {
   ResidentProfile,
   BoardMember,
   RequestQuery,
-  FAQ
+  FAQ,
+  RequestVote,
+  AIAgentSession,
+  Asset
 } from './types'
 import { verifyAndResolveMapsLink, extractCoordsFromMapsLink } from './mapUtils'
 
@@ -178,21 +181,26 @@ export async function getAllAmenities(): Promise<Amenity[]> {
     const records = await base('Amenities')
       .select({
         sort: [{ field: 'name', direction: 'asc' }],
-        fields: ['name', 'slug', 'description', 'hours', 'image', 'category']
+        fields: ['name', 'slug', 'description', 'hours', 'image', 'category', 'Status', 'Board Visibility', 'Status Note']
       })
       .all();
 
     console.log(`✅ Found ${records.length} amenities`);
 
-    return records.map((record) => ({
-      id: record.id,
-      name: record.get('name') as string || '',
-      slug: record.get('slug') as string || '',
-      description: record.get('description') as string || '',
-      hours: record.get('hours') as string | undefined,
-      image: record.get('image') as AirtableAttachment[] | undefined,
-      category: record.get('category') as string | undefined,
-    }));
+    return records
+      .map((record) => ({
+        id: record.id,
+        name: record.get('name') as string || '',
+        slug: record.get('slug') as string || '',
+        description: record.get('description') as string || '',
+        hours: record.get('hours') as string | undefined,
+        image: record.get('image') as AirtableAttachment[] | undefined,
+        category: record.get('category') as string | undefined,
+        status: (record.get('Status') as string) || 'Open',
+        visibility: (record.get('Board Visibility') as string) || 'Board & Residents',
+        statusNote: record.get('Status Note') as string | undefined,
+      }))
+      .filter((amenity) => amenity.visibility !== 'Board Only');
   } catch (error: any) {
     console.error('❌ Error fetching amenities:', error.message);
     return [];
@@ -206,13 +214,17 @@ export async function getAmenityBySlug(slug: string): Promise<Amenity | null> {
     const records = await base('Amenities')
       .select({
         filterByFormula: `{slug} = '${slug}'`,
-        fields: ['name', 'slug', 'description', 'hours', 'image', 'category']
+        fields: ['name', 'slug', 'description', 'hours', 'image', 'category', 'Status', 'Board Visibility', 'Status Note']
       })
       .firstPage();
 
     if (records.length === 0) return null;
 
     const record = records[0];
+    const visibility = (record.get('Board Visibility') as string) || 'Board & Residents';
+
+    if (visibility === 'Board Only') return null;
+
     return {
       id: record.id,
       name: record.get('name') as string || '',
@@ -221,6 +233,9 @@ export async function getAmenityBySlug(slug: string): Promise<Amenity | null> {
       hours: record.get('hours') as string | undefined,
       image: record.get('image') as AirtableAttachment[] | undefined,
       category: record.get('category') as string | undefined,
+      status: (record.get('Status') as string) || 'Open',
+      visibility,
+      statusNote: record.get('Status Note') as string | undefined,
     };
   } catch (error: any) {
     console.error('❌ Error fetching amenity by slug:', error.message);
@@ -753,9 +768,9 @@ export async function getRequestCategories(): Promise<RequestCategory[]> {
 export async function submitServiceRequest(
   data: ServiceRequestInput,
   submittedVia: string = 'Resident'
-): Promise<boolean> {
+): Promise<{ success: boolean; recordId?: string }> {
   try {
-    if (!base) return false
+    if (!base) return { success: false }
 
     const fields: any = {
       'Requester Name': data.requesterName,
@@ -767,23 +782,26 @@ export async function submitServiceRequest(
       'Submitted Via': submittedVia,
       Status: 'New',
       'Submitted Date': new Date().toISOString().split('T')[0],
-
+      'Voting Open': data.votingOpen || false,
     }
 
     if (data.locationLink) {
-      fields['Location Link'] = data.locationLink
-      const coords = await extractCoordsFromMapsLink(data.locationLink)
-      if (coords) {
-        fields['Latitude'] = coords.lat
-        fields['Longitude'] = coords.lng
+      const { verified, resolvedUrl } = await verifyAndResolveMapsLink(data.locationLink)
+      if (verified && resolvedUrl) {
+        fields['Location Link'] = resolvedUrl
+        const coords = await extractCoordsFromMapsLink(data.locationLink)
+        if (coords) {
+          fields['Latitude'] = coords.lat
+          fields['Longitude'] = coords.lng
+        }
       }
     }
 
-    await base('Service Requests').create([{ fields }])
-    return true
+    const created = await base('Service Requests').create([{ fields }])
+    return { success: true, recordId: created[0].id }
   } catch (error: any) {
     console.error('❌ Error submitting service request:', error.message)
-    return false
+    return { success: false }
   }
 }
 
@@ -977,6 +995,8 @@ export async function getAllServiceRequests(includePrivateNotes: boolean = false
         closed_date: record.get('Closed Date') as string | undefined,
         possible_duplicate: !!record.get('Possible Duplicate'),
         ai_classification_notes: record.get('AI Classification Notes') as string | undefined,
+        voting_open: !!record.get('Voting Open'),
+        vote_outcome: (record.get('Vote Outcome') as any)?.name || record.get('Vote Outcome') as string | undefined,
       }
     })
   } catch (error: any) {
@@ -997,12 +1017,14 @@ export async function getBoardMemberById(recordId: string): Promise<BoardMember 
   try {
     if (!base || !recordId) return null
     const record = await base('Board Members').find(recordId)
+    const photos = record.get('Profile Photo') as { url: string }[] | undefined
     return {
       id: record.id,
       name: (record.get('Board Member Name') as string) || '',
       email: (record.get('Email') as string) || '',
       phone: record.get('Phone') as string | undefined,
       role: record.get('Role') as string | undefined,
+      photoUrl: photos?.[0]?.url,
     }
   } catch {
     return null
@@ -1052,9 +1074,10 @@ export async function submitManagementRequest(data: {
   dueDate?: string
   estimatedCost?: string
   locationLink?: string
-}): Promise<boolean> {
+  votingOpen?: boolean
+}): Promise<{ success: boolean; recordId?: string }> {
   try {
-    if (!base) return false
+    if (!base) return { success: false }
 
     const fields: any = {
       'Requester Name': data.requesterName,
@@ -1067,29 +1090,29 @@ export async function submitManagementRequest(data: {
       'Submitted Date': new Date().toISOString().split('T')[0],
       'Triage Started Date': new Date().toISOString().split('T')[0],
       'Triage Completed Date': new Date().toISOString().split('T')[0],
+      'Voting Open': data.votingOpen || false,
     }
     if (data.proposedSolution) fields['Management Proposed Solution'] = data.proposedSolution
     if (data.dueDate) fields['Management Due Date'] = data.dueDate
     if (data.estimatedCost) fields['Estimated Cost'] = data.estimatedCost
 
     if (data.locationLink) {
-  const { verified, resolvedUrl } = await verifyAndResolveMapsLink(data.locationLink)
-  if (verified && resolvedUrl) {
-    fields['Location Link'] = resolvedUrl
-    const coords = await extractCoordsFromMapsLink(data.locationLink)
-    if (coords) {
-      fields['Latitude'] = coords.lat
-      fields['Longitude'] = coords.lng
+      const { verified, resolvedUrl } = await verifyAndResolveMapsLink(data.locationLink)
+      if (verified && resolvedUrl) {
+        fields['Location Link'] = resolvedUrl
+        const coords = await extractCoordsFromMapsLink(data.locationLink)
+        if (coords) {
+          fields['Latitude'] = coords.lat
+          fields['Longitude'] = coords.lng
+        }
+      }
     }
-  }
-  // if not verified, the link is silently dropped, nothing is stored
-}
 
-    await base('Service Requests').create([{ fields }])
-    return true
+    const created = await base('Service Requests').create([{ fields }])
+    return { success: true, recordId: created[0].id }
   } catch (error: any) {
     console.error('❌ Error submitting management request:', error.message)
-    return false
+    return { success: false }
   }
 }
 
@@ -1097,10 +1120,12 @@ export async function getManagementById(recordId: string) {
   try {
     if (!base || !recordId) return null
     const record = await base('Management Companies').find(recordId)
+    const photos = record.get('Profile Photo') as { url: string }[] | undefined
     return {
       id: record.id,
       name: (record.get('Company Name') as string) || '',
       email: (record.get('Contact Email') as string) || '',
+      photoUrl: photos?.[0]?.url,
     }
   } catch {
     return null
@@ -1118,6 +1143,7 @@ export async function getQueriesForRequest(requestIdNumber: number): Promise<Req
         id: r.id,
         queryText: (r.get('Query Text') as string) || '',
         askedByName: (r.get('Asked By Name') as string) || '',
+        askedByEmail: (r.get('Asked By Email') as string) || '',
         responseText: r.get('Response Text') as string | undefined,
         answered: !!r.get('Answered'),
         createdTime: r._rawJson.createdTime,
@@ -1210,3 +1236,278 @@ export async function getAgentSession(email: string): Promise<AIAgentSession | n
     }
   } catch { return null }
 }
+
+export async function getVotesForRequest(requestRecordId: string): Promise<RequestVote[]> {
+  try {
+    if (!base) return []
+    const records = await base('Request Votes').select().all()
+    return records
+      .filter((r) => {
+        const linked = r.get('Request') as string[] | undefined
+        return linked?.includes(requestRecordId)
+      })
+      .map((r) => {
+        const boardMemberLinks = (r.get('Board Member') as string[]) || []
+        return {
+          id: r.id,
+          boardMemberId: boardMemberLinks[0] || '',
+          boardMemberName: '', // filled in by the caller, see below
+          vote: r.get('Vote') as 'Approve' | 'Disapprove',
+        }
+      })
+  } catch (error: any) {
+    console.error('❌ Error fetching votes:', error.message)
+    return []
+  }
+}
+
+export async function castVote(
+  requestRecordId: string,
+  boardMemberRecordId: string,
+  boardMemberName: string,
+  vote: 'Approve' | 'Disapprove'
+): Promise<boolean> {
+  try {
+    if (!base) return false
+    const existing = await base('Request Votes').select().all()
+    const existingVote = existing.find((r) => {
+      const reqLinks = (r.get('Request') as string[]) || []
+      const memberLinks = (r.get('Board Member') as string[]) || []
+      return reqLinks.includes(requestRecordId) && memberLinks.includes(boardMemberRecordId)
+    })
+
+    const voteLabel = `${boardMemberName} — ${vote}`
+
+    if (existingVote) {
+      await base('Request Votes').update([{ id: existingVote.id, fields: { Vote: vote, 'Vote Label': voteLabel } }])
+    } else {
+      await base('Request Votes').create([
+        {
+          fields: {
+            'Vote Label': voteLabel,
+            Request: [requestRecordId],
+            'Board Member': [boardMemberRecordId],
+            Vote: vote,
+          },
+        },
+      ])
+    }
+    return true
+  } catch (error: any) {
+    console.error('❌ Error casting vote:', error.message)
+    return false
+  }
+}
+
+export async function toggleVotingOpen(requestRecordId: string, open: boolean): Promise<boolean> {
+  try {
+    if (!base) return false
+    await base('Service Requests').update([{ id: requestRecordId, fields: { 'Voting Open': open } }])
+    return true
+  } catch (error: any) {
+    console.error('❌ Error toggling voting:', error.message)
+    return false
+  }
+}
+
+export async function getAllBoardMembers(): Promise<{ id: string; name: string; email: string; photoUrl?: string }[]> {
+  try {
+    if (!base) return []
+    const records = await base('Board Members').select().all()
+    return records.map((r) => {
+      const photos = r.get('Profile Photo') as { url: string }[] | undefined
+      return {
+        id: r.id,
+        name: (r.get('Board Member Name') as string) || '',
+        email: (r.get('Email') as string) || '',
+        photoUrl: photos?.[0]?.url,
+      }
+    })
+  } catch {
+    return []
+  }
+}
+
+export async function getStarredRequestIds(userEmail: string): Promise<string[]> {
+  try {
+    if (!base) return []
+    const records = await base('Starred Items').select().all()
+    return records
+      .filter((r) => (r.get('User Email') as string)?.toLowerCase() === userEmail.toLowerCase())
+      .map((r) => {
+        const linked = (r.get('Request') as string[]) || []
+        return linked[0]
+      })
+      .filter(Boolean) as string[]
+  } catch (error: any) {
+    console.error('❌ Error fetching starred items:', error.message)
+    return []
+  }
+}
+
+export async function toggleStar(
+  requestRecordId: string,
+  userEmail: string,
+  userName: string
+): Promise<boolean> {
+  try {
+    if (!base) return false
+    const existing = await base('Starred Items').select().all()
+    const existingStar = existing.find((r) => {
+      const linked = (r.get('Request') as string[]) || []
+      return linked.includes(requestRecordId) && (r.get('User Email') as string)?.toLowerCase() === userEmail.toLowerCase()
+    })
+
+    if (existingStar) {
+      await base('Starred Items').destroy([existingStar.id])
+    } else {
+      await base('Starred Items').create([
+        {
+          fields: {
+            'Star Label': `${userName} — starred`,
+            Request: [requestRecordId],
+            'User Email': userEmail,
+            'User Name': userName,
+          },
+        },
+      ])
+    }
+    return true
+  } catch (error: any) {
+    console.error('❌ Error toggling star:', error.message)
+    return false
+  }
+}
+
+export async function resolveVote(requestRecordId: string, outcome: 'Approved' | 'Rejected'): Promise<boolean> {
+  try {
+    if (!base) return false
+    await base('Service Requests').update([
+      { id: requestRecordId, fields: { 'Vote Outcome': outcome, 'Voting Open': false } },
+    ])
+    return true
+  } catch (error: any) {
+    console.error('❌ Error resolving vote:', error.message)
+    return false
+  }
+}
+
+
+
+
+export async function getAllAssets(): Promise<Asset[]> {
+  try {
+    if (!base) return []
+    const records = await base('Amenities').select({ sort: [{ field: 'name', direction: 'asc' }] }).all()
+    return records.map((r) => ({
+      id: r.id,
+      name: (r.get('name') as string) || '',
+      category: (r.get('category') as string) || 'Other',
+      status: (r.get('Status') as any) || 'Open',
+      visibility: (r.get('Board Visibility') as any) || 'Board & Residents',
+      statusNote: r.get('Status Note') as string | undefined,
+      lastUpdatedBy: r.get('Last Updated By') as string | undefined,
+    }))
+  } catch (error: any) {
+    console.error('❌ Error fetching amenities:', error.message)
+    return []
+  }
+}
+
+export async function updateAssetStatus(
+  assetId: string,
+  status: 'Open' | 'Closed' | 'Under Maintenance',
+  updatedBy: string,
+  statusNote?: string
+): Promise<boolean> {
+  try {
+    if (!base) return false
+    const fields: any = { Status: status, 'Last Updated By': updatedBy }
+    // Only touch the note field when one was actually provided, so clearing
+    // the status back to Open elsewhere doesn't silently wipe a note someone
+    // may still want on record.
+    if (statusNote !== undefined) fields['Status Note'] = statusNote
+    await base('Amenities').update([{ id: assetId, fields }])
+    return true
+  } catch (error: any) {
+    console.error('❌ Error updating amenity status:', error.message)
+    return false
+  }
+}
+
+
+export async function uploadProfilePhoto(
+  table: 'Board Members' | 'Management Companies',
+  recordId: string,
+  base64Content: string,
+  filename: string,
+  contentType: string
+): Promise<boolean> {
+  try {
+    const tableId = table === 'Board Members' ? 'tblPOc73oyvGIijS8' : 'tblmkDgA5infb7iLL'
+    const fieldId = table === 'Board Members' ? 'fldDNNIaPXbvWhPkF' : 'fldauonTKaaQi5myw'
+    const baseId = 'app3AwDclb6uHhH1J'
+
+    const response = await fetch(
+      `https://content.airtable.com/v0/${baseId}/${recordId}/${fieldId}/uploadAttachment`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contentType,
+          file: base64Content,
+          filename,
+        }),
+      }
+    )
+
+    if (!response.ok) {
+      const errText = await response.text()
+      console.error('❌ Error uploading profile photo:', errText)
+      return false
+    }
+    return true
+  } catch (error: any) {
+    console.error('❌ Error uploading profile photo:', error.message)
+    return false
+  }
+}
+
+export async function updatePersonEmail(
+  table: 'Board Members' | 'Management Companies',
+  recordId: string,
+  newEmail: string
+): Promise<boolean> {
+  try {
+    if (!base) return false
+    // Field ID confirmed correct for both tables, see schema check.
+    const emailFieldId = table === 'Board Members' ? 'fldYV0wzPg6XqpxXm' : 'fldEXI7lI8PpGZifA'
+    await base(table).update([{ id: recordId, fields: { [emailFieldId]: newEmail } }])
+    return true
+  } catch (error: any) {
+    console.error('❌ Error updating email:', error.message)
+    return false
+  }
+}
+
+export async function getAllManagementUsers(): Promise<{ id: string; name: string; email: string; photoUrl?: string }[]> {
+  try {
+    if (!base) return []
+    const records = await base('Management Companies').select().all()
+    return records.map((r) => {
+      const photos = r.get('Profile Photo') as { url: string }[] | undefined
+      return {
+        id: r.id,
+        name: (r.get('Company Name') as string) || '',
+        email: (r.get('Contact Email') as string) || '',
+        photoUrl: photos?.[0]?.url,
+      }
+    })
+  } catch {
+    return []
+  }
+}
+

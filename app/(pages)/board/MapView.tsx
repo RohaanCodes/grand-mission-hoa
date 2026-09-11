@@ -29,8 +29,8 @@ function pinIcon(color: string) {
   })
 }
 
-const OPEN_ICON = pinIcon('#c9a961')
-const CLOSED_ICON = pinIcon('#8a9a6f')
+const OPEN_ICON = pinIcon('#2563eb')
+const CLOSED_ICON = pinIcon('#16a34a')
 
 function FitToMarkers({ points }: { points: [number, number][] }) {
   const map = useMap()
@@ -66,18 +66,18 @@ export default function MapView({ requests }: { requests: ServiceRequest[] }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <p className="text-sm text-foreground/60">
+        <p className="text-sm text-slate-500">
           {visible.length} of {located.length} located requests shown
           {requests.length !== located.length && (
-            <span className="text-foreground/40"> &middot; {requests.length - located.length} have no location on file</span>
+            <span className="text-slate-400"> &middot; {requests.length - located.length} have no location on file</span>
           )}
         </p>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 bg-primary/8 rounded-lg p-1">
+          <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
             <button
               onClick={() => setLayer('satellite')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                layer === 'satellite' ? 'bg-primary text-primary-foreground' : 'text-primary/60 hover:bg-primary/10'
+                layer === 'satellite' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-200'
               }`}
             >
               Satellite
@@ -85,7 +85,7 @@ export default function MapView({ requests }: { requests: ServiceRequest[] }) {
             <button
               onClick={() => setLayer('street')}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                layer === 'street' ? 'bg-primary text-primary-foreground' : 'text-primary/60 hover:bg-primary/10'
+                layer === 'street' ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-200'
               }`}
             >
               Street
@@ -95,8 +95,8 @@ export default function MapView({ requests }: { requests: ServiceRequest[] }) {
             onClick={() => setShowClosed((v) => !v)}
             className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
               showClosed
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-card text-foreground/60 border-border hover:bg-muted'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
             }`}
           >
             {showClosed ? 'Showing all' : 'Showing open only'}
@@ -105,11 +105,11 @@ export default function MapView({ requests }: { requests: ServiceRequest[] }) {
       </div>
 
       {located.length === 0 ? (
-        <div className="bg-muted/50 rounded-lg p-12 text-center">
-          <p className="text-foreground/50 text-sm">No requests have a location on file yet.</p>
+        <div className="bg-slate-50 rounded-lg p-12 text-center">
+          <p className="text-slate-400 text-sm">No requests have a location on file yet.</p>
         </div>
       ) : (
-        <div className="rounded-xl overflow-hidden border border-border" style={{ height: 560 }}>
+        <div className="rounded-xl overflow-hidden border border-slate-100" style={{ height: 560 }}>
           <MapContainer center={center} zoom={18} style={{ height: '100%', width: '100%' }}>
             <TileLayer attribution={TILE_LAYERS[layer].attribution} url={TILE_LAYERS[layer].url} />
             <FitToMarkers points={points} />
@@ -134,7 +134,7 @@ export default function MapView({ requests }: { requests: ServiceRequest[] }) {
                         {r.requester_name}{r.unit_address ? ` · ${r.unit_address}` : ''}
                       </p>
                       <p style={{ fontSize: 12, marginBottom: 6 }}>{r.description}</p>
-                      <p style={{ fontSize: 11, fontWeight: 'bold', color: isClosed ? '#4a6b3a' : '#8a6d2f' }}>
+                      <p style={{ fontSize: 11, fontWeight: 'bold', color: isClosed ? '#16a34a' : '#2563eb' }}>
                         {r.status || 'New'}
                       </p>
                     </div>
@@ -148,12 +148,12 @@ export default function MapView({ requests }: { requests: ServiceRequest[] }) {
 
       <div className="flex items-center gap-5 mt-4">
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#c9a961' }} />
-          <span className="text-xs text-foreground/60">Open</span>
+          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#2563eb' }} />
+          <span className="text-xs text-slate-500">Open</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#8a9a6f' }} />
-          <span className="text-xs text-foreground/60">Closed</span>
+          <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#16a34a' }} />
+          <span className="text-xs text-slate-500">Closed</span>
         </div>
       </div>
     </div>
