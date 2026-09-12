@@ -61,7 +61,7 @@ export default async function BoardDashboardPage() {
           </div>
 
           <BoardDashboard requests={requests} currentEmail={boardMember.email} currentName={boardMember.name} viewerRole="board" />
-          <BoardAIAssistant currentEmail={boardMember.email} />
+          
         </section>
       </main>
 

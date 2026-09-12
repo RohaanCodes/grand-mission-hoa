@@ -48,6 +48,12 @@ export default function RequestListRow({
   const Icon = catStyle.icon
   const statusKey = req.status || 'New'
   const statusStyle = STATUS_STYLE[statusKey] || { color: '#64748b', label: statusKey }
+  const isClosed = ['Resolved', 'Closed', 'Closed (AI)'].includes(statusKey)
+
+  const ageDays = req.submitted_date
+    ? Math.max(0, Math.floor((Date.now() - new Date(req.submitted_date).getTime()) / 86400000))
+    : null
+  const ageLabel = ageDays === null ? null : ageDays === 0 ? 'Today' : ageDays === 1 ? '1 day' : `${ageDays} days`
 
   return (
     <div
@@ -70,6 +76,11 @@ export default function RequestListRow({
             <span className="text-sm font-semibold text-slate-900 truncate">{categoryName}</span>
             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusStyle.color }} />
             <span className="text-xs flex-shrink-0" style={{ color: statusStyle.color }}>{statusStyle.label}</span>
+            {ageLabel && !isClosed && (
+              <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                {ageLabel}
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-700 truncate">
             {req.requester_name} &middot; {req.description}

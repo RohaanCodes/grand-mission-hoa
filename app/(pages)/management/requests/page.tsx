@@ -26,11 +26,11 @@ export default async function ManagementRequestsPage() {
 
       <main className="flex-1 min-w-0 pb-20 lg:pb-0">
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-          <Link href="/management" className="inline-flex items-center gap-2 text-sm text-foreground/60 hover:text-foreground mb-4 lg:hidden transition-colors">
+          <Link href="/management" className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-4 lg:hidden transition-colors">
             <ArrowLeft size={16} strokeWidth={1.8} /> Dashboard
           </Link>
 
-          <h1 className="font-serif text-2xl sm:text-3xl text-primary mb-6">Requests</h1>
+          
 
           <RequestsSection
             requests={requests}
