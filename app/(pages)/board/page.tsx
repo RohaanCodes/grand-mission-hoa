@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { getAllServiceRequests, getBoardMemberById } from '@/lib/airtable'
 import BoardDashboard from './BoardDashboard'
 import BoardAIAssistant from './BoardAIAssistant'
+import NoticeBoardShutter from './NoticeBoardShutter'
 import Sidebar from './Sidebar'
 import BottomNav from './BottomNav'
 
@@ -33,6 +34,8 @@ export default async function BoardDashboardPage() {
 
       <main className="flex-1 min-w-0 pb-20 lg:pb-0">
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <NoticeBoardShutter currentName={boardMember.name} currentEmail={boardMember.email} viewerRole="board" />
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
@@ -61,7 +64,7 @@ export default async function BoardDashboardPage() {
           </div>
 
           <BoardDashboard requests={requests} currentEmail={boardMember.email} currentName={boardMember.name} viewerRole="board" />
-          
+          <BoardAIAssistant currentEmail={boardMember.email} />
         </section>
       </main>
 

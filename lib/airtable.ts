@@ -20,7 +20,8 @@ import type {
   FAQ,
   RequestVote,
   AIAgentSession,
-  Asset
+  Asset,
+  Notice
 } from './types'
 import { verifyAndResolveMapsLink, extractCoordsFromMapsLink } from './mapUtils'
 
@@ -997,6 +998,8 @@ export async function getAllServiceRequests(includePrivateNotes: boolean = false
         ai_classification_notes: record.get('AI Classification Notes') as string | undefined,
         voting_open: !!record.get('Voting Open'),
         vote_outcome: (record.get('Vote Outcome') as any)?.name || record.get('Vote Outcome') as string | undefined,
+        resident_confirmation: (record.get('Resident Confirmation') as any)?.name || record.get('Resident Confirmation') as string | undefined,
+        info_requested: record.get('Info Requested by Management') as string | undefined,
       }
     })
   } catch (error: any) {
@@ -1511,3 +1514,129 @@ export async function getAllManagementUsers(): Promise<{ id: string; name: strin
   }
 }
 
+export async function submitManagementTriage(data: {
+  requestIdNumber: number
+  updateType: 'In Progress' | 'Resolved' | 'Need More Info From Resident'
+  proposedSolution?: string
+  dueDate?: string
+  additionalNotes?: string
+}): Promise<boolean> {
+  try {
+    if (!base) return false
+
+    const fields: any = {
+      'Request ID Number': data.requestIdNumber,
+      'Update Type': data.updateType,
+    }
+    if (data.proposedSolution) fields['Proposed Solution'] = data.proposedSolution
+    if (data.dueDate) fields['Due Date'] = data.dueDate
+    if (data.additionalNotes) fields['Additional Notes'] = data.additionalNotes
+
+    await base('Management Triage Submissions').create([{ fields }])
+    return true
+  } catch (error: any) {
+    console.error('❌ Error submitting management triage:', error.message)
+    return false
+  }
+}
+
+export async function getAllNotices(): Promise<Notice[]> {
+  try {
+    if (!base) return []
+    const records = await base('Notice Board').select({ sort: [{ field: 'Author Name', direction: 'asc' }] }).all()
+    return records
+      .map((r) => ({
+        id: r.id,
+        noteText: (r.get('Note Text') as string) || '',
+        authorName: (r.get('Author Name') as string) || '',
+        authorEmail: (r.get('Author Email') as string) || '',
+        authorRole: (r.get('Author Role') as 'Board' | 'Management') || 'Board',
+        color: (r.get('Color') as 'Yellow' | 'Blue' | 'Green' | 'Pink') || 'Yellow',
+        createdTime: r._rawJson.createdTime,
+      }))
+      .sort((a, b) => new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime())
+  } catch (error: any) {
+    console.error('❌ Error fetching notices:', error.message)
+    return []
+  }
+}
+
+export async function createNotice(data: {
+  noteText: string
+  authorName: string
+  authorEmail: string
+  authorRole: 'Board' | 'Management'
+  color: 'Yellow' | 'Blue' | 'Green' | 'Pink'
+}): Promise<boolean> {
+  try {
+    if (!base) return false
+    await base('Notice Board').create([
+      {
+        fields: {
+          'Note Text': data.noteText,
+          'Author Name': data.authorName,
+          'Author Email': data.authorEmail,
+          'Author Role': data.authorRole,
+          Color: data.color,
+        },
+      },
+    ])
+    return true
+  } catch (error: any) {
+    console.error('❌ Error creating notice:', error.message)
+    return false
+  }
+}
+
+export async function deleteNotice(noticeId: string): Promise<boolean> {
+  try {
+    if (!base) return false
+    await base('Notice Board').destroy([noticeId])
+    return true
+  } catch (error: any) {
+    console.error('❌ Error deleting notice:', error.message)
+    return false
+  }
+}
+
+export async function submitResidentInfo(data: {
+  requestIdNumber: number
+  additionalInformation: string
+}): Promise<boolean> {
+  try {
+    if (!base) return false
+    await base('Resident Info Submissions').create([
+      {
+        fields: {
+          'Request ID Number': data.requestIdNumber,
+          'Additional Information': data.additionalInformation,
+        },
+      },
+    ])
+    return true
+  } catch (error: any) {
+    console.error('❌ Error submitting resident info:', error.message)
+    return false
+  }
+}
+
+export async function submitResidentConfirmation(data: {
+  requestIdNumber: number
+  confirmation: 'Confirmed - Issue is Fixed' | 'Disputed - Not Actually Fixed'
+  notes?: string
+}): Promise<boolean> {
+  try {
+    if (!base) return false
+    const fields: any = {
+      'Request ID Number': data.requestIdNumber,
+      Confirmation: data.confirmation,
+    }
+    if (data.notes) fields['Notes'] = data.notes
+
+    await base('Resident Confirmation Submissions').create([{ fields }])
+    return true
+  } catch (error: any) {
+    console.error('❌ Error submitting resident confirmation:', error.message)
+    return false
+  }
+}

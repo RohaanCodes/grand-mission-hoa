@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getAllServiceRequests, getManagementById } from '@/lib/airtable'
 import BoardDashboard from '../board/BoardDashboard'
+import NoticeBoardShutter from '../board/NoticeBoardShutter'
 import Sidebar from '../board/Sidebar'
 import BottomNav from '../board/BottomNav'
 
@@ -32,6 +33,8 @@ export default async function ManagementDashboardPage() {
 
       <main className="flex-1 min-w-0 pb-20 lg:pb-0">
         <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <NoticeBoardShutter currentName={mgmt.name} currentEmail={mgmt.email} viewerRole="management" />
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">

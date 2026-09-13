@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { Wrench, Volume2, Palette, Receipt, Trees, Dumbbell, HelpCircle, MapPin, LucideIcon } from 'lucide-react'
 import RequestStatusBadge from './RequestStatusBadge'
+import RequesterActionPanel from '../board/RequesterActionPanel'
 import type { ServiceRequest } from '@/lib/types'
 
 const categoryIcons: Record<string, LucideIcon> = {
@@ -17,7 +18,15 @@ const categoryIcons: Record<string, LucideIcon> = {
 
 const CLOSED_STATUSES = ['Resolved', 'Closed', 'Closed (AI)']
 
-export default function ResidentRequestCard({ req, index }: { req: ServiceRequest; index: number }) {
+export default function ResidentRequestCard({
+  req,
+  index,
+  currentEmail,
+}: {
+  req: ServiceRequest
+  index: number
+  currentEmail: string
+}) {
   const categoryName = req.final_category || req.category_resident_selected || 'Other'
   const Icon = categoryIcons[categoryName] || HelpCircle
   const isClosed = CLOSED_STATUSES.includes(req.status || '')
@@ -53,6 +62,8 @@ export default function ResidentRequestCard({ req, index }: { req: ServiceReques
               View location
             </a>
           )}
+
+          <RequesterActionPanel req={req} currentEmail={currentEmail} />
 
           {req.submitted_date && (
             <p className="text-foreground/40 text-xs mt-3">

@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { Wrench, Volume2, Palette, Receipt, Trees, Dumbbell, HelpCircle, Waves, ShieldCheck, Handshake, Landmark, Lock, MapPin, Gavel, LucideIcon } from 'lucide-react'
 import RequestThread from './RequestThread'
+import TriagePanel from './TriagePanel'
+import RequesterActionPanel from './RequesterActionPanel'
 import ConfirmModal from './ConfirmModal'
 import { closeRequestAction, updatePrivateNoteAction } from './queryActions'
 import { toggleVotingAction } from './votingActions'
@@ -251,6 +253,16 @@ export default function InternalRequestCard({
               </motion.div>
             )}
           </AnimatePresence>
+
+          <RequesterActionPanel req={req} currentEmail={currentEmail} />
+
+          {viewerRole === 'management' && !isClosed && req.request_id_number && (
+            <TriagePanel
+              requestIdNumber={req.request_id_number}
+              currentName={currentName}
+              currentEmail={currentEmail}
+            />
+          )}
 
           {req.request_id_number && (
             <RequestThread

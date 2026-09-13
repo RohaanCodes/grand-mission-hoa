@@ -108,6 +108,7 @@ export default function BoardDashboard({
         <SectionHeader icon={<ListChecks className="w-4.5 h-4.5" />} tone="slate" title="Recent Requests" />
         <RecentRequestsTable requests={requests} basePath={viewerRole === 'management' ? '/management' : '/board'} />
       </div>
+
     </div>
   )
 }

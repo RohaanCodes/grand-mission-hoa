@@ -184,6 +184,8 @@ export interface ServiceRequest {
   ai_classification_notes?: string
   voting_open?: boolean
   vote_outcome?: string
+  resident_confirmation?: string
+  info_requested?: string
 }
 
 export interface ResidentProfile {
@@ -247,4 +249,14 @@ export interface Asset {
   notes?: string
   lastUpdatedBy?: string
   statusNote?: string
+}
+
+export interface Notice {
+  id: string
+  noteText: string
+  authorName: string
+  authorEmail: string
+  authorRole: 'Board' | 'Management'
+  color: 'Yellow' | 'Blue' | 'Green' | 'Pink'
+  createdTime: string
 }
