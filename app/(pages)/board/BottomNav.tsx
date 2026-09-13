@@ -31,7 +31,7 @@ export default function BottomNav({
   const pathname = usePathname()
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/80 pb-[env(safe-area-inset-bottom)]">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200/80 pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-stretch overflow-x-auto scrollbar-hide">
         {NAV_ITEMS.map((item) => {
           const href = `${basePath}${item.path}`

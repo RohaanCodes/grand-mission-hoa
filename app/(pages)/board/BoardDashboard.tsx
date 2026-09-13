@@ -70,8 +70,8 @@ export default function BoardDashboard({
   return (
     <div className="space-y-6">
       {/* Hero metric strip: the one place a card + shadow genuinely earns it */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm px-6 py-5">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 divide-y sm:divide-y-0 sm:divide-x divide-slate-200">
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm px-4 sm:px-6 py-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-4 lg:gap-y-0 lg:divide-x divide-slate-200">
           <Stat icon={<Inbox className="w-4 h-4" />} value={requests.length} label="Total Requests" sub={`+${thisMonthCount} this month`} tone="slate" />
           <Stat icon={<Clock className="w-4 h-4" />} value={openCount} label="Open" sub={`${openPct}% of total`} tone="blue" />
           <Stat icon={<AlertCircle className="w-4 h-4" />} value={waitingCount} label="Needs Attention" sub="awaiting a response" tone="amber" />
@@ -85,26 +85,26 @@ export default function BoardDashboard({
           so they visually separate themselves from purely informational
           content below without everything looking the same. */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl px-6 py-5">
+        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl px-4 sm:px-6 py-5">
           <SectionHeader icon={<TrendingUp className="w-4.5 h-4.5" />} tone="slate" title="Activity" />
           <OverviewActivityChart requests={requests} />
         </div>
 
-        <div className="lg:col-span-3 bg-white border border-slate-200 rounded-2xl px-6 py-5">
+        <div className="lg:col-span-3 bg-white border border-slate-200 rounded-2xl px-4 sm:px-6 py-5">
           <SectionHeader icon={<Star className="w-4.5 h-4.5" />} tone="amber" title="Starred Items" />
           <StarredPanel requests={requests} currentEmail={currentEmail} currentName={currentName} viewerRole={viewerRole} />
         </div>
       </div>
 
       {duplicateCount > 0 && (
-        <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl px-6 py-5">
+        <div className="bg-amber-50/60 border border-amber-200/70 rounded-2xl px-4 sm:px-6 py-5">
           <SectionHeader icon={<Copy className="w-4.5 h-4.5" />} tone="amber" title="Possible Duplicates" meta={`${duplicateCount} flagged for review`} />
           <DuplicatesPanel requests={requests} />
         </div>
       )}
 
       {/* Purely informational, no card shadow, just a plain bordered area */}
-      <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5">
+      <div className="bg-white border border-slate-200 rounded-2xl px-4 sm:px-6 py-5">
         <SectionHeader icon={<ListChecks className="w-4.5 h-4.5" />} tone="slate" title="Recent Requests" />
         <RecentRequestsTable requests={requests} basePath={viewerRole === 'management' ? '/management' : '/board'} />
       </div>
@@ -166,7 +166,7 @@ function Stat({
   }[tone]
 
   return (
-    <div className="px-4 py-3 sm:py-0 first:pl-0">
+    <div className="px-3 sm:px-4 py-3 lg:py-0 lg:first:pl-0">
       <div className={`flex items-start gap-1.5 mb-1 min-h-[2rem] ${toneClass}`}>
         <span className="mt-0.5">{icon}</span>
         <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide leading-tight">{label}</span>
@@ -190,7 +190,7 @@ function TrendStat({
   const TrendIcon = trend.direction === 'up' ? TrendingUp : trend.direction === 'down' ? TrendingDown : Minus
 
   return (
-    <div className="px-4 py-3 sm:py-0 first:pl-0">
+    <div className="px-3 sm:px-4 py-3 lg:py-0 lg:first:pl-0">
       <div className="flex items-start gap-1.5 mb-1 min-h-[2rem] text-slate-600">
         <TrendIcon className="w-4 h-4 mt-0.5" />
         <span className="text-xs font-semibold text-slate-600 uppercase tracking-wide leading-tight">{label}</span>

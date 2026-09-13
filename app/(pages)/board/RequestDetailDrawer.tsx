@@ -27,14 +27,14 @@ export default function RequestDetailDrawer({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/30 z-40"
+            className="fixed inset-0 bg-black/30 z-50"
           />
           <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.25 }}
-            className="dashboard fixed top-0 right-0 h-full w-full sm:w-[440px] bg-slate-50 z-50 overflow-y-auto shadow-2xl"
+            className="dashboard fixed top-0 right-0 h-full w-full sm:w-[440px] bg-slate-50 z-[60] overflow-y-auto shadow-2xl"
           >
             <div className="sticky top-0 bg-white border-b border-slate-100 px-5 py-4 flex items-center justify-between z-10">
               <h2 className="text-base font-semibold text-slate-900">Request Detail</h2>
@@ -45,7 +45,7 @@ export default function RequestDetailDrawer({
                 <X className="w-4 h-4 text-slate-500" strokeWidth={2} />
               </button>
             </div>
-            <div className="p-4">
+            <div className="p-4 pb-24 lg:pb-4">
               <InternalRequestCard
                 req={request}
                 index={0}

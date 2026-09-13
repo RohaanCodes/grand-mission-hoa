@@ -124,7 +124,7 @@ export default function RequestsSection({
     // both being squeezed inside a second padded box on top of the page's
     // own padding.
     <div className="space-y-4">
-      <div className="bg-blue-600 rounded-2xl px-5 sm:px-6 py-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="bg-blue-600 rounded-2xl px-4 sm:px-6 py-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2.5">
           <span className="w-8 h-8 rounded-lg bg-white/15 text-white flex items-center justify-center">
             <ListChecks className="w-4 h-4" strokeWidth={2} />

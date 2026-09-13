@@ -72,8 +72,8 @@ export default function RequestListRow({
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-sm font-semibold text-slate-900 truncate">{categoryName}</span>
+          <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+            <span className="text-sm font-semibold text-slate-900 truncate min-w-0 max-w-[55%] sm:max-w-none">{categoryName}</span>
             <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusStyle.color }} />
             <span className="text-xs flex-shrink-0" style={{ color: statusStyle.color }}>{statusStyle.label}</span>
             {ageLabel && !isClosed && (

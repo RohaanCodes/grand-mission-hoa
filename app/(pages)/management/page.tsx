@@ -32,15 +32,15 @@ export default async function ManagementDashboardPage() {
       <Sidebar basePath="/management" />
 
       <main className="flex-1 min-w-0 pb-20 lg:pb-0">
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <section className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
           <NoticeBoardShutter currentName={mgmt.name} currentEmail={mgmt.email} viewerRole="management" />
 
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
+          <div className="bg-blue-600 rounded-2xl px-4 sm:px-6 py-5 sm:py-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 {greeting()}, {firstName}
               </h1>
-              <p className="text-slate-500 text-sm mt-1">Here's what needs your attention today.</p>
+              <p className="text-blue-50 text-sm mt-1 font-medium">Here's what needs your attention today.</p>
             </div>
 
             <div className="flex items-center gap-4 flex-wrap">
@@ -48,14 +48,14 @@ export default async function ManagementDashboardPage() {
                 href="https://airtable.com/app3AwDclb6uHhH1J/shrnC68Kokab4V81y"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-slate-500 hover:text-slate-900 underline underline-offset-2"
+                className="text-sm text-blue-50 hover:text-white underline underline-offset-2 font-medium"
               >
                 Share feedback
               </a>
 
               <a
                 href="/management/submit"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg font-medium text-sm text-center w-full sm:w-auto transition-colors"
+                className="bg-white hover:bg-blue-50 text-blue-700 px-4 py-2.5 rounded-lg font-semibold text-sm text-center w-full sm:w-auto transition-colors shadow-sm"
               >
                 Log an Item
               </a>

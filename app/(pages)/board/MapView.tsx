@@ -109,7 +109,7 @@ export default function MapView({ requests }: { requests: ServiceRequest[] }) {
           <p className="text-slate-400 text-sm">No requests have a location on file yet.</p>
         </div>
       ) : (
-        <div className="rounded-xl overflow-hidden border border-slate-100" style={{ height: 560 }}>
+        <div className="rounded-xl overflow-hidden border border-slate-100 isolate relative z-0" style={{ height: 560 }}>
           <MapContainer center={center} zoom={18} style={{ height: '100%', width: '100%' }}>
             <TileLayer attribution={TILE_LAYERS[layer].attribution} url={TILE_LAYERS[layer].url} />
             <FitToMarkers points={points} />

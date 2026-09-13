@@ -96,18 +96,18 @@ export default function RequesterActionPanel({
           placeholder="Optional notes, especially if you're disputing this"
           className="w-full text-sm border border-amber-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => handleConfirmation('Confirmed - Issue is Fixed')}
             disabled={submitting}
-            className="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-60 whitespace-nowrap"
           >
             Yes, it's fixed
           </button>
           <button
             onClick={() => handleConfirmation('Disputed - Not Actually Fixed')}
             disabled={submitting}
-            className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-60"
+            className="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-60 whitespace-nowrap"
           >
             No, reopen this
           </button>

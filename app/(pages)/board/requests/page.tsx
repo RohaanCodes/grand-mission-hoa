@@ -25,12 +25,12 @@ export default async function BoardRequestsPage() {
       <Sidebar basePath="/board" />
 
       <main className="flex-1 min-w-0 pb-20 lg:pb-0">
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <section className="max-w-7xl mx-auto px-3 sm:px-6 py-6 sm:py-8">
           <Link href="/board" className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-4 lg:hidden transition-colors">
             <ArrowLeft size={16} strokeWidth={1.8} /> Dashboard
           </Link>
 
-       
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-6">Requests</h1>
 
           <RequestsSection
             requests={requests}

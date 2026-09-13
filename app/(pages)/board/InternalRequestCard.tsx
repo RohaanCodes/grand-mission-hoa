@@ -135,7 +135,7 @@ export default function InternalRequestCard({
         transition={{ duration: 0.25, delay: index * 0.03 }}
         className="bg-white border border-slate-300 rounded-2xl shadow-[0_2px_8px_-2px_rgba(100,116,139,0.18),0_1px_3px_rgba(100,116,139,0.12)] hover:shadow-[0_8px_20px_-4px_rgba(100,116,139,0.25),0_2px_6px_rgba(100,116,139,0.15)] transition-shadow overflow-hidden"
       >
-        <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
+        <div className="flex items-start justify-between gap-3 px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
           <div className="flex items-center gap-3 min-w-0">
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -165,7 +165,7 @@ export default function InternalRequestCard({
           </div>
         </div>
 
-        <div className="px-5 pb-4">
+        <div className="px-4 sm:px-5 pb-4">
           <p className="text-xs text-slate-600 mb-2">
             {req.requester_name}{metaParts.length > 0 ? ` · ${metaParts.join(' · ')}` : ''}
           </p>
@@ -275,7 +275,7 @@ export default function InternalRequestCard({
         </div>
 
         {(viewerRole === 'management' || viewerRole === 'board' || (allowClose && !isClosed)) && (
-          <div className="flex items-center justify-end gap-1.5 px-4 py-2.5 bg-slate-50 border-t border-slate-200">
+          <div className="flex items-center justify-end gap-1.5 px-3 sm:px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex-wrap">
             {(viewerRole === 'management' || viewerRole === 'board') && (
               <button
                 onClick={handleToggleVoting}

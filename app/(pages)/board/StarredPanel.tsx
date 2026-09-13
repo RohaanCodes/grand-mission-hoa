@@ -38,9 +38,9 @@ export default function StarredPanel({
 
   return (
     <div>
-      <div className="divide-y divide-slate-200 -mx-6">
+      <div className="divide-y divide-slate-200 -mx-4 sm:-mx-6">
         {starred.map((req) => (
-          <div key={req.id} className="px-6">
+          <div key={req.id} className="px-4 sm:px-6">
             <RequestListRow
               req={req}
               onClick={() => setSelectedRequest(req)}
