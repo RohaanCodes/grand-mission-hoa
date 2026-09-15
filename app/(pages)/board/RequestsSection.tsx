@@ -61,6 +61,7 @@ export default function RequestsSection({
   const [viewMode, setViewMode] = useState<ViewMode>('grid1')
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest')
 
   const filtered = useMemo(() => {
     let result = requests
@@ -97,26 +98,14 @@ export default function RequestsSection({
       })
     }
 
-    // Surface what actually needs a human first: stuck-waiting items
-    // oldest-first, then active items oldest-first, closed items last.
-    const WAITING = ['Awaiting Management Response', 'Awaiting Resident Info', 'Board Notified']
-    const CLOSED = ['Resolved', 'Closed', 'Closed (AI)']
-    function tier(status: string | undefined): number {
-      const s = status || 'New'
-      if (WAITING.includes(s)) return 0
-      if (CLOSED.includes(s)) return 2
-      return 1
-    }
     result = [...result].sort((a, b) => {
-      const tierDiff = tier(a.status) - tier(b.status)
-      if (tierDiff !== 0) return tierDiff
       const aTime = a.submitted_date ? new Date(a.submitted_date).getTime() : 0
       const bTime = b.submitted_date ? new Date(b.submitted_date).getTime() : 0
-      return aTime - bTime
+      return sortOrder === 'newest' ? bTime - aTime : aTime - bTime
     })
 
     return result
-  }, [requests, sourceFilter, statusFilter, currentEmail, searchTerm])
+  }, [requests, sourceFilter, statusFilter, currentEmail, searchTerm, sortOrder])
 
   return (
     // No outer padded wrapper: the control bar and the card grid are now
@@ -157,6 +146,25 @@ export default function RequestsSection({
               <option key={opt.key} value={opt.key}>{opt.label}</option>
             ))}
           </select>
+
+          <div className="flex items-center gap-1 bg-white/15 rounded-lg p-1">
+            <button
+              onClick={() => setSortOrder('newest')}
+              className={`px-2.5 py-1.5 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
+                sortOrder === 'newest' ? 'bg-white text-blue-700' : 'text-white/80 hover:bg-white/10'
+              }`}
+            >
+              Newest first
+            </button>
+            <button
+              onClick={() => setSortOrder('oldest')}
+              className={`px-2.5 py-1.5 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
+                sortOrder === 'oldest' ? 'bg-white text-blue-700' : 'text-white/80 hover:bg-white/10'
+              }`}
+            >
+              Oldest first
+            </button>
+          </div>
 
           <div className="flex items-center gap-1 bg-white/15 rounded-lg p-1">
             <button
