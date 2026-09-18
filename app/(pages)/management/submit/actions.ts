@@ -36,5 +36,5 @@ export async function submitManagementRequestAction(data: {
     await toggleStar(result.recordId, mgmt.email, mgmt.name)
   }
 
-  return { success: result.success }
+  return { success: result.success, recordId: result.recordId }
 }

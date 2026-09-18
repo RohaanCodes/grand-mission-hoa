@@ -2,7 +2,7 @@
 'use client'
 import { useState } from 'react'
 import { MessageCircle, ChevronDown } from 'lucide-react'
-import { getQueriesAction, askQueryAction, respondToQueryAction, getPeoplePhotosAction } from './queryActions'
+import { getQueriesAction, askQueryAction, respondToQueryAction, getPeoplePhotosAction, } from './queryActions'
 import type { RequestQuery } from '@/lib/types'
 
 // Fixed 4-color palette, one per person. Same name always resolves to
@@ -86,7 +86,7 @@ export default function RequestThread({
           {queries.map((q) => {
             const color = colorForName(q.askedByName)
             const initial = q.askedByName.charAt(0).toUpperCase()
-            const photoUrl = photoMap[q.askedByEmail?.toLowerCase() || '']
+            const photoUrl = photoMap[q.askedByEmail?.trim().toLowerCase() || '']
             return (
               <div
                 key={q.id}

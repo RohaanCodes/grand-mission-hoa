@@ -186,6 +186,9 @@ export interface ServiceRequest {
   vote_outcome?: string
   resident_confirmation?: string
   info_requested?: string
+  images?: RequestImage[]
+  description_summary?: string
+  vote_resolved_date?: string
 }
 
 export interface ResidentProfile {
@@ -259,4 +262,21 @@ export interface Notice {
   authorRole: 'Board' | 'Management'
   color: 'Yellow' | 'Blue' | 'Green' | 'Pink'
   createdTime: string
+}
+
+export interface RequestImage {
+  url: string
+  filename: string
+  thumbnailUrl?: string
+}
+
+export interface ThreadParticipant {
+  name: string
+  email: string
+  photoUrl?: string
+}
+ 
+export interface ThreadSummary {
+  messageCount: number
+  participants: ThreadParticipant[]
 }

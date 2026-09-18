@@ -35,5 +35,5 @@ export async function submitBoardRequestAction(data: {
     await toggleStar(result.recordId, boardMember.email, boardMember.name)
   }
 
-  return { success: result.success }
+  return { success: result.success, recordId: result.recordId }
 }

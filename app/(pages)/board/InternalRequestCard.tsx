@@ -1,329 +1,213 @@
 // app/(pages)/board/InternalRequestCard.tsx
 'use client'
-import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import Link from 'next/link'
-import { Wrench, Volume2, Palette, Receipt, Trees, Dumbbell, HelpCircle, Waves, ShieldCheck, Handshake, Landmark, Lock, MapPin, Gavel, LucideIcon } from 'lucide-react'
-import RequestThread from './RequestThread'
-import TriagePanel from './TriagePanel'
-import RequesterActionPanel from './RequesterActionPanel'
-import ConfirmModal from './ConfirmModal'
-import { closeRequestAction, updatePrivateNoteAction } from './queryActions'
-import { toggleVotingAction } from './votingActions'
+import { motion } from 'framer-motion'
+import {
+  Wrench, Volume2, Palette, Receipt, Trees, Dumbbell, HelpCircle, Waves, ShieldCheck,
+  Handshake, Landmark, LucideIcon, Clock, Gavel, Copy, MessageSquareText,
+} from 'lucide-react'
 import StarButton from './StarButton'
 import type { ServiceRequest } from '@/lib/types'
 
-const CATEGORY_STYLE: Record<string, { icon: LucideIcon; color: string; bg: string }> = {
-  Maintenance: { icon: Wrench, color: '#ea580c', bg: '#ea580c12' },
-  'Noise Complaint': { icon: Volume2, color: '#9333ea', bg: '#9333ea12' },
-  'Architectural Change': { icon: Palette, color: '#0891b2', bg: '#0891b212' },
-  Billing: { icon: Receipt, color: '#16a34a', bg: '#16a34a12' },
-  'Common Area': { icon: Trees, color: '#2563eb', bg: '#2563eb12' },
-  Amenity: { icon: Dumbbell, color: '#d97706', bg: '#d9770612' },
-  Landscaping: { icon: Trees, color: '#16a34a', bg: '#16a34a12' },
-  'Pool & Aquatics': { icon: Waves, color: '#0891b2', bg: '#0891b212' },
-  'Security & Safety': { icon: ShieldCheck, color: '#dc2626', bg: '#dc262612' },
-  'Vendor & Contract Management': { icon: Handshake, color: '#9333ea', bg: '#9333ea12' },
-  'Governance & Board Operations': { icon: Landmark, color: '#4f46e5', bg: '#4f46e512' },
-  Other: { icon: HelpCircle, color: '#64748b', bg: '#64748b12' },
+// Exact values from the approved reference: full-opacity -100→-200 tint,
+// a matching divider, and the SAME hue driving icon, tint, divider, and
+// the avatar bubble — one consistent accent per category, not a random
+// per-person avatar color.
+const CATEGORY_STYLE: Record<string, { icon: LucideIcon; iconColor: string; tint: string; divider: string; avatar: string }> = {
+  Maintenance: { icon: Wrench, iconColor: 'text-orange-600', tint: 'from-orange-100 to-orange-200', divider: 'bg-orange-200/70', avatar: 'bg-orange-500' },
+  'Noise Complaint': { icon: Volume2, iconColor: 'text-violet-600', tint: 'from-violet-100 to-violet-200', divider: 'bg-violet-200/70', avatar: 'bg-violet-500' },
+  'Architectural Change': { icon: Palette, iconColor: 'text-sky-600', tint: 'from-sky-100 to-sky-200', divider: 'bg-sky-200/70', avatar: 'bg-sky-500' },
+  Billing: { icon: Receipt, iconColor: 'text-emerald-600', tint: 'from-emerald-100 to-emerald-200', divider: 'bg-emerald-200/70', avatar: 'bg-emerald-500' },
+  'Common Area': { icon: Trees, iconColor: 'text-blue-600', tint: 'from-blue-100 to-blue-200', divider: 'bg-blue-200/70', avatar: 'bg-blue-500' },
+  Amenity: { icon: Dumbbell, iconColor: 'text-cyan-600', tint: 'from-cyan-100 to-cyan-200', divider: 'bg-cyan-200/70', avatar: 'bg-cyan-500' },
+  Landscaping: { icon: Trees, iconColor: 'text-emerald-600', tint: 'from-emerald-100 to-emerald-200', divider: 'bg-emerald-200/70', avatar: 'bg-emerald-500' },
+  'Pool & Aquatics': { icon: Waves, iconColor: 'text-sky-600', tint: 'from-sky-100 to-sky-200', divider: 'bg-sky-200/70', avatar: 'bg-sky-500' },
+  'Security & Safety': { icon: ShieldCheck, iconColor: 'text-rose-600', tint: 'from-rose-100 to-rose-200', divider: 'bg-rose-200/70', avatar: 'bg-rose-500' },
+  'Vendor & Contract Management': { icon: Handshake, iconColor: 'text-violet-600', tint: 'from-violet-100 to-violet-200', divider: 'bg-violet-200/70', avatar: 'bg-violet-500' },
+  'Governance & Board Operations': { icon: Landmark, iconColor: 'text-indigo-600', tint: 'from-indigo-100 to-indigo-200', divider: 'bg-indigo-200/70', avatar: 'bg-indigo-500' },
+  Other: { icon: HelpCircle, iconColor: 'text-gray-600', tint: 'from-gray-100 to-gray-200', divider: 'bg-gray-200/70', avatar: 'bg-gray-500' },
 }
 
-const STATUS_STYLE: Record<string, { color: string; label: string }> = {
-  New: { color: '#64748b', label: 'New' },
-  'Agent In Progress': { color: '#d97706', label: 'In Progress' },
-  'Awaiting Management Response': { color: '#2563eb', label: 'Awaiting Management' },
-  'Awaiting Resident Info': { color: '#9333ea', label: 'Awaiting Info' },
-  'Board Notified': { color: '#d97706', label: 'Board Notified' },
-  Resolved: { color: '#16a34a', label: 'Resolved' },
-  Closed: { color: '#16a34a', label: 'Closed' },
-  'Closed (AI)': { color: '#16a34a', label: 'Closed (AI)' },
+const STATUS_STYLE: Record<string, { dot: string; text: string; bg: string; ring: string; label: string }> = {
+  New: { dot: 'bg-slate-500', text: 'text-slate-700', bg: 'bg-slate-50', ring: 'ring-slate-200/60', label: 'New' },
+  'Agent In Progress': { dot: 'bg-amber-500', text: 'text-amber-700', bg: 'bg-amber-50', ring: 'ring-amber-200/60', label: 'In Progress' },
+  'Awaiting Management Response': { dot: 'bg-blue-500', text: 'text-blue-700', bg: 'bg-blue-50', ring: 'ring-blue-200/60', label: 'Awaiting Management' },
+  'Awaiting Resident Info': { dot: 'bg-purple-500', text: 'text-purple-700', bg: 'bg-purple-50', ring: 'ring-purple-200/60', label: 'Awaiting Info' },
+  'Board Notified': { dot: 'bg-amber-500', text: 'text-amber-700', bg: 'bg-amber-50', ring: 'ring-amber-200/60', label: 'Board Notified' },
+  Resolved: { dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50', ring: 'ring-emerald-200/60', label: 'Resolved' },
+  Closed: { dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50', ring: 'ring-emerald-200/60', label: 'Closed' },
+  'Closed (AI)': { dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50', ring: 'ring-emerald-200/60', label: 'Closed (AI)' },
+}
+
+function initialsForName(name: string): string {
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
 const CLOSED_STATUSES = ['Resolved', 'Closed', 'Closed (AI)']
 
-function canClose(viewerRole: 'board' | 'management', req: ServiceRequest): boolean {
-  if (viewerRole === 'management') return true
-  return req.submitted_via === 'Board Member'
+const AVATAR_COLORS = ['bg-blue-500', 'bg-purple-500', 'bg-emerald-500', 'bg-orange-500', 'bg-pink-500', 'bg-cyan-500']
+
+function colorForName(name: string): string {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length]
 }
 
 export default function InternalRequestCard({
   req,
   index,
-  viewerRole,
   currentName,
   currentEmail,
+  onClick,
+  size = 'default',
+  threadSummary,
 }: {
   req: ServiceRequest
   index: number
-  viewerRole: 'board' | 'management'
   currentName: string
   currentEmail: string
+  onClick: () => void
+  size?: 'default' | 'large'
+  threadSummary?: { messageCount: number; participants: { name: string; email: string; photoUrl?: string }[] }
 }) {
-  const router = useRouter()
-  const [confirming, setConfirming] = useState(false)
-  const [closing, setClosing] = useState(false)
-  const [togglingVote, setTogglingVote] = useState(false)
-
-  const [noteOpen, setNoteOpen] = useState(false)
-  const [noteDraft, setNoteDraft] = useState(req.private_notes || '')
-  const [savingNote, setSavingNote] = useState(false)
-  const noteRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!noteOpen) return
-    function handleClickOutside(e: MouseEvent) {
-      if (noteRef.current && !noteRef.current.contains(e.target as Node)) {
-        saveAndClose()
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [noteOpen, noteDraft])
-
   const categoryName = req.final_category || req.category_resident_selected || 'Other'
   const catStyle = CATEGORY_STYLE[categoryName] || CATEGORY_STYLE.Other
-  const Icon = catStyle.icon
+  const CategoryIcon = catStyle.icon
   const statusKey = req.status || 'New'
-  const statusStyle = STATUS_STYLE[statusKey] || { color: '#64748b', label: statusKey }
+  const statusStyle = STATUS_STYLE[statusKey] || STATUS_STYLE.New
   const isClosed = CLOSED_STATUSES.includes(statusKey)
-  const allowClose = canClose(viewerRole, req)
-  const hasNote = !!req.private_notes?.trim()
-  const hasSolutionInfo = !!(req.proposed_solution || req.estimated_cost || req.management_due_date)
-  const initial = req.requester_name?.charAt(0).toUpperCase() || '?'
-
-  const metaParts = [
-    req.unit_address,
-    req.submitted_date ? new Date(req.submitted_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : null,
-  ].filter(Boolean)
 
   const ageDays = req.submitted_date
     ? Math.max(0, Math.floor((Date.now() - new Date(req.submitted_date).getTime()) / 86400000))
     : null
-  const ageLabel = ageDays === null ? null : ageDays === 0 ? 'Today' : ageDays === 1 ? '1 day' : `${ageDays} days`
+  const ageLabel = ageDays === null ? '—' : ageDays === 0 ? 'Today' : ageDays === 1 ? '1 day ago' : `${ageDays} days ago`
 
-  async function handleConfirmClose() {
-    setClosing(true)
-    await closeRequestAction(req.id)
-    setClosing(false)
-    setConfirming(false)
-    router.refresh()
-  }
-
-  async function saveAndClose() {
-    if (noteDraft !== (req.private_notes || '')) {
-      setSavingNote(true)
-      await updatePrivateNoteAction(req.id, noteDraft)
-      setSavingNote(false)
-    }
-    setNoteOpen(false)
-  }
-
-  async function handleToggleVoting() {
-    setTogglingVote(true)
-    await toggleVotingAction(req.id, !req.voting_open)
-    setTogglingVote(false)
-    router.refresh()
-  }
+  const initials = initialsForName(req.requester_name || req.requester_email || '?')
 
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.25, delay: index * 0.03 }}
-        className="bg-white border border-slate-300 rounded-2xl shadow-[0_2px_8px_-2px_rgba(100,116,139,0.18),0_1px_3px_rgba(100,116,139,0.12)] hover:shadow-[0_8px_20px_-4px_rgba(100,116,139,0.25),0_2px_6px_rgba(100,116,139,0.15)] transition-shadow overflow-hidden"
-      >
-        <div className="flex items-start justify-between gap-3 px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: catStyle.bg, color: catStyle.color }}
-            >
-              <Icon className="w-5 h-5" strokeWidth={2} />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-[15px] font-semibold text-slate-900 leading-tight">{categoryName}</h3>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: statusStyle.color }} />
-                <span className="text-xs font-medium" style={{ color: statusStyle.color }}>{statusStyle.label}</span>
-                {ageLabel && !isClosed && (
-                  <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 py-0.5 rounded-full flex-shrink-0">
-                    {ageLabel}
-                  </span>
-                )}
-              </div>
-            </div>
+    <motion.button
+      onClick={onClick}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, delay: Math.min(index * 0.02, 0.3) }}
+      className={`group relative flex flex-col text-left overflow-hidden rounded-2xl border border-slate-200/80 bg-gradient-to-br ${catStyle.tint} p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md hover:shadow-slate-200/40 ${
+        size === 'large' ? 'min-h-[260px]' : 'min-h-[220px]'
+      }`}
+    >
+      {/* Top row: icon + ref + badges */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white ring-1 ring-inset ring-black/5">
+            <CategoryIcon className={`h-5 w-5 ${catStyle.iconColor}`} strokeWidth={2.2} />
           </div>
-
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <StarButton requestRecordId={req.id} currentEmail={currentEmail} currentName={currentName} />
-            <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[11px] font-semibold flex-shrink-0">
-              {initial}
-            </div>
-          </div>
-        </div>
-
-        <div className="px-4 sm:px-5 pb-4">
-          <p className="text-xs text-slate-600 mb-2">
-            {req.requester_name}{metaParts.length > 0 ? ` · ${metaParts.join(' · ')}` : ''}
-          </p>
-
-          <p className="text-[14px] text-slate-800 leading-relaxed">{req.description}</p>
-
-          {req.location_link && (
-            <a
-              href={req.location_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-700 mt-2"
-            >
-              <MapPin className="w-3.5 h-3.5" strokeWidth={2} />
-              View location
-            </a>
-          )}
-
-          {hasSolutionInfo && (
-            <div className="mt-3 bg-green-50/60 rounded-xl px-4 py-3">
-              {req.proposed_solution && (
-                <div className="mb-1.5 last:mb-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-green-700 mb-1">
-                    Proposed Solution
-                  </p>
-                  <p className="text-sm text-slate-700">{req.proposed_solution}</p>
-                </div>
-              )}
-              {(req.estimated_cost || req.management_due_date) && (
-                <div className="flex flex-wrap gap-x-5 gap-y-1 mt-1.5">
-                  {req.estimated_cost && (
-                    <span className="text-xs text-slate-500">
-                      <span className="font-medium text-slate-600">Cost</span> {req.estimated_cost}
-                    </span>
-                  )}
-                  {req.management_due_date && (
-                    <span className="text-xs text-slate-500">
-                      <span className="font-medium text-slate-600">Target</span>{' '}
-                      {new Date(req.management_due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {req.voting_open && (
-            <Link
-              href={viewerRole === 'management' ? '/management/votes' : '/board/votes'}
-              className="mt-3 flex items-center justify-between gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 hover:bg-amber-100/70 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Gavel className="w-3.5 h-3.5 text-amber-700" strokeWidth={2} />
-                <span className="text-xs font-medium text-amber-700">Open for board vote</span>
-              </div>
-              <span className="text-xs text-amber-700 underline underline-offset-2">View Vote</span>
-            </Link>
-          )}
-
-          <AnimatePresence>
-            {noteOpen && (
-              <motion.div
-                ref={noteRef}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.18 }}
-                className="overflow-hidden mt-3"
-              >
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <Lock className="w-3 h-3 text-slate-400" strokeWidth={2} />
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                    Private note, management only
-                  </span>
-                  {savingNote && <span className="text-[10px] text-slate-400 ml-auto">Saving</span>}
-                </div>
-                <textarea
-                  autoFocus
-                  value={noteDraft}
-                  onChange={(e) => setNoteDraft(e.target.value)}
-                  placeholder="Internal reference note"
-                  rows={3}
-                  className="w-full bg-amber-50/60 border border-amber-200/60 rounded-xl px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-300/50 resize-none"
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <RequesterActionPanel req={req} currentEmail={currentEmail} />
-
-          {viewerRole === 'management' && !isClosed && req.request_id_number && (
-            <TriagePanel
-              requestIdNumber={req.request_id_number}
-              currentName={currentName}
-              currentEmail={currentEmail}
-            />
-          )}
-
           {req.request_id_number && (
-            <RequestThread
-              requestIdNumber={req.request_id_number}
-              currentName={currentName}
-              currentEmail={currentEmail}
-              viewerRole={viewerRole}
-            />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 truncate">
+              Ref #{req.request_id_number}
+            </span>
           )}
         </div>
 
-        {(viewerRole === 'management' || viewerRole === 'board' || (allowClose && !isClosed)) && (
-          <div className="flex items-center justify-end gap-1.5 px-3 sm:px-4 py-2.5 bg-slate-50 border-t border-slate-200 flex-wrap">
-            {(viewerRole === 'management' || viewerRole === 'board') && (
-              <button
-                onClick={handleToggleVoting}
-                disabled={togglingVote}
-                className={`text-xs font-semibold rounded-full px-3 py-1.5 transition-colors disabled:opacity-50 border ${
-                  req.voting_open
-                    ? 'text-blue-700 bg-blue-100 border-blue-200 hover:bg-blue-200'
-                    : 'text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100'
-                }`}
+        <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          {req.voting_open && (
+            <span title="Open for board vote" className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-500 overflow-hidden">
+              <motion.span
+                animate={{ rotate: [0, -28, 0] }}
+                transition={{ duration: 0.9, repeat: Infinity, repeatDelay: 0.9, ease: 'easeInOut' }}
+                style={{ transformOrigin: '85% 85%' }}
               >
-                {req.voting_open ? 'Close Vote' : 'Open Item for Vote'}
-              </button>
-            )}
-            {viewerRole === 'management' && (
-              <button
-                onClick={() => setNoteOpen(true)}
-                title={hasNote ? 'View private note' : 'Add private note'}
-                className={`flex items-center gap-1.5 text-xs font-semibold rounded-full px-3 py-1.5 transition-colors border ${
-                  hasNote
-                    ? 'text-amber-700 bg-amber-100 border-amber-200 hover:bg-amber-200'
-                    : 'text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100'
-                }`}
-              >
-                <Lock className="w-3 h-3" strokeWidth={2} />
-                Note
-              </button>
-            )}
-            {allowClose && !isClosed && (
-              <button
-                onClick={() => setConfirming(true)}
-                className="text-xs font-semibold text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-full px-3 py-1.5 transition-colors"
-              >
-                Close Request
-              </button>
-            )}
-          </div>
-        )}
-      </motion.div>
+                <Gavel className="h-[15px] w-[15px]" strokeWidth={2} />
+              </motion.span>
+            </span>
+          )}
+          {req.proposed_solution && (
+            <span title="Management has proposed a solution" className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-500">
+              <MessageSquareText className="h-[15px] w-[15px]" strokeWidth={2} />
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+            </span>
+          )}
+          {req.possible_duplicate && (
+            <span title="Possible duplicate" className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-500">
+              <Copy className="h-[15px] w-[15px]" strokeWidth={2} />
+            </span>
+          )}
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white">
+            <StarButton requestRecordId={req.id} currentEmail={currentEmail} currentName={currentName} />
+          </span>
+        </div>
+      </div>
 
-      <ConfirmModal
-        open={confirming}
-        title="Close this request?"
-        description="This marks the request as closed. This action can be reversed manually in Airtable if needed, but it will no longer show as open."
-        confirmLabel="Close Request"
-        onConfirm={handleConfirmClose}
-        onCancel={() => setConfirming(false)}
-        loading={closing}
-      />
-    </>
+      {/* Title */}
+      <h3 className="mt-4 text-[15px] font-bold leading-snug text-slate-800 truncate">
+        {categoryName}
+      </h3>
+
+      {/* Description — the AI-summarized 2-line version, not the raw
+          submission. Falls back to the raw description for any request
+          that hasn't been processed by the summarizer field yet. */}
+      <div className="mt-3 rounded-xl bg-white p-3 ring-1 ring-inset ring-slate-200/60 flex-1">
+        <p className={`text-[13px] leading-relaxed text-slate-600 ${size === 'large' ? 'line-clamp-4' : 'line-clamp-2'}`}>
+          {req.description_summary || req.description}
+        </p>
+      </div>
+
+      {/* Divider — matches the category's own hue, not a generic gray */}
+      {/* Thread activity — avatar stack of who's asked something, plus a
+          total message count. Only shows up if there's actually a thread. */}
+      {threadSummary && threadSummary.messageCount > 0 && (
+        <div className="flex items-center gap-1.5 mt-2.5">
+          <span className="flex -space-x-1.5">
+            {threadSummary.participants.slice(0, 3).map((p) =>
+              p.photoUrl ? (
+                <img
+                  key={p.email}
+                  src={p.photoUrl}
+                  alt={p.name}
+                  title={p.name}
+                  className="w-5 h-5 rounded-full ring-2 ring-white object-cover"
+                />
+              ) : (
+                <span
+                  key={p.email}
+                  title={p.name}
+                  className={`w-5 h-5 rounded-full ring-2 ring-white flex items-center justify-center text-[8px] font-bold text-white ${colorForName(p.name)}`}
+                >
+                  {initialsForName(p.name)}
+                </span>
+              )
+            )}
+            {threadSummary.participants.length > 3 && (
+              <span className="w-5 h-5 rounded-full ring-2 ring-white bg-slate-300 flex items-center justify-center text-[7px] font-bold text-slate-700">
+                +{threadSummary.participants.length - 3}
+              </span>
+            )}
+          </span>
+          <span className="text-[11px] text-slate-500">{threadSummary.messageCount} message{threadSummary.messageCount === 1 ? '' : 's'}</span>
+        </div>
+      )}
+
+      <div className={`my-4 h-px ${catStyle.divider}`} />
+
+      {/* Bottom: requester + time, status badge */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${catStyle.avatar} text-[11px] font-bold text-white ring-2 ring-white/80`}>
+            {initials}
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[12px] font-medium text-slate-700 truncate">{req.requester_name}</span>
+            <span className="flex items-center gap-1 text-[11px] text-slate-500">
+              <Clock className="h-3 w-3" strokeWidth={2.2} />
+              {ageLabel}
+            </span>
+          </div>
+        </div>
+
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold flex-shrink-0 ${statusStyle.bg} ${statusStyle.text} ring-1 ring-inset ${statusStyle.ring}`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${statusStyle.dot}`} />
+          {statusStyle.label}
+        </span>
+      </div>
+    </motion.button>
   )
 }

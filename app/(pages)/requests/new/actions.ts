@@ -10,6 +10,6 @@ export async function submitRequestAction(data: {
   description: string
   locationLink?: string
 }) {
-  const success = await submitServiceRequest(data)
-  return { success }
+  const result = await submitServiceRequest(data)
+  return { success: result.success, recordId: result.recordId }
 }

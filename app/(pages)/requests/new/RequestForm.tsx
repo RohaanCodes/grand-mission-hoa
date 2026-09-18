@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { RequestCategory } from '@/lib/types'
 import { submitRequestAction } from './actions'
+// NOTE: this file lives at app/(pages)/requests/new/RequestForm.tsx
+import RequestImagePicker, { PickedImage } from '../../board/RequestImagePicker'
+import { uploadRequestImagesAction } from '../../board/requestImagesActions'
 
 interface PrefillData {
   requesterName: string
@@ -26,6 +29,7 @@ export default function RequestForm({ categories, prefill }: RequestFormProps) {
   const [description, setDescription] = useState('')
   const [locationLink, setLocationLink] = useState('')
   const [isNotMe, setIsNotMe] = useState(false)
+  const [images, setImages] = useState<PickedImage[]>([])
 
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -53,6 +57,17 @@ export default function RequestForm({ categories, prefill }: RequestFormProps) {
       description,
       locationLink: locationLink || undefined,
     })
+
+    if (result.success && result.recordId && images.length > 0) {
+      await uploadRequestImagesAction(
+        result.recordId,
+        images.map((img) => ({
+          base64Content: img.base64Content,
+          filename: img.filename,
+          contentType: img.contentType,
+        }))
+      )
+    }
 
     setSubmitting(false)
 
@@ -173,6 +188,8 @@ export default function RequestForm({ categories, prefill }: RequestFormProps) {
           placeholder="Tell us what's going on, the more detail, the better we can help."
         />
       </Field>
+
+      <RequestImagePicker images={images} onChange={setImages} />
 
       <Field label="Location link (optional)">
         <input

@@ -14,11 +14,11 @@ export default async function BoardSubmitPage() {
   const categories = await getRequestCategories()
 
   return (
-    <main className="min-h-screen bg-background">
-      <section className="max-w-2xl mx-auto px-6 py-16 md:py-24">
-        <h1 className="font-serif text-4xl text-primary mb-2">Submit a Request</h1>
-        <p className="text-foreground/70 mb-8">
-          Submitting as <span className="font-medium">{boardMember.name}</span>
+    <main className="min-h-screen bg-slate-50">
+      <section className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-1">Submit a Request</h1>
+        <p className="text-slate-500 text-sm mb-6">
+          Submitting as <span className="font-medium text-slate-700">{boardMember.name}</span>
         </p>
         <BoardRequestForm categories={categories} />
       </section>

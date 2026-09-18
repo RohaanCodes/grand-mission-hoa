@@ -21,7 +21,8 @@ import type {
   RequestVote,
   AIAgentSession,
   Asset,
-  Notice
+  Notice,
+  ThreadSummary
 } from './types'
 import { verifyAndResolveMapsLink, extractCoordsFromMapsLink } from './mapUtils'
 
@@ -1000,6 +1001,15 @@ export async function getAllServiceRequests(includePrivateNotes: boolean = false
         vote_outcome: (record.get('Vote Outcome') as any)?.name || record.get('Vote Outcome') as string | undefined,
         resident_confirmation: (record.get('Resident Confirmation') as any)?.name || record.get('Resident Confirmation') as string | undefined,
         info_requested: record.get('Info Requested by Management') as string | undefined,
+        // Fixed — this is now a sibling of `images`, not nested inside its
+        // .map() callback, so it actually lands on the request object.
+        description_summary: (record.get('Request Description Summarizer') as any)?.value || undefined,
+        vote_resolved_date: record.get('Vote Resolved Date') as string | undefined,
+        images: ((record.get('Request Images') as any[]) || []).map((att: any) => ({
+          url: att.url,
+          filename: att.filename,
+          thumbnailUrl: att.thumbnails?.large?.url || att.thumbnails?.small?.url || att.url,
+        })),
       }
     })
   } catch (error: any) {
@@ -1322,7 +1332,7 @@ export async function getAllBoardMembers(): Promise<{ id: string; name: string; 
       return {
         id: r.id,
         name: (r.get('Board Member Name') as string) || '',
-        email: (r.get('Email') as string) || '',
+        email: String(r.get('Email') || '').trim(),
         photoUrl: photos?.[0]?.url,
       }
     })
@@ -1385,12 +1395,21 @@ export async function toggleStar(
 export async function resolveVote(requestRecordId: string, outcome: 'Approved' | 'Rejected'): Promise<boolean> {
   try {
     if (!base) return false
-    await base('Service Requests').update([
-      { id: requestRecordId, fields: { 'Vote Outcome': outcome, 'Voting Open': false } },
-    ])
+ 
+    // Only stamp the resolved date the first time — otherwise a re-vote
+    // after resolution would keep pushing it forward and it would never
+    // age into the archive.
+    const existing = await base('Service Requests').find(requestRecordId)
+    const alreadyResolved = !!existing.get('Vote Resolved Date')
+ 
+    const fields: Record<string, any> = { 'Vote Outcome': outcome }
+    if (!alreadyResolved) {
+      fields['Vote Resolved Date'] = new Date().toISOString()
+    }
+ 
+    await base('Service Requests').update([{ id: requestRecordId, fields }])
     return true
-  } catch (error: any) {
-    console.error('❌ Error resolving vote:', error.message)
+  } catch {
     return false
   }
 }
@@ -1505,7 +1524,7 @@ export async function getAllManagementUsers(): Promise<{ id: string; name: strin
       return {
         id: r.id,
         name: (r.get('Company Name') as string) || '',
-        email: (r.get('Contact Email') as string) || '',
+        email: String(r.get('Contact Email') || '').trim(),
         photoUrl: photos?.[0]?.url,
       }
     })
@@ -1639,4 +1658,141 @@ export async function submitResidentConfirmation(data: {
     console.error('❌ Error submitting resident confirmation:', error.message)
     return false
   }
+}
+
+
+// Add to lib/airtable.ts
+
+// Add this line inside getAllServiceRequests()'s record.map(...) return object,
+// alongside the other field mappings:
+//
+//   images: ((record.get('Request Images') as any[]) || []).map((att: any) => ({
+//     url: att.url,
+//     filename: att.filename,
+//     thumbnailUrl: att.thumbnails?.large?.url || att.thumbnails?.small?.url || att.url,
+//   })),
+
+// Airtable's content-upload endpoint uploads one attachment at a time and
+// APPENDS it to whatever's already in the field, it never overwrites. This
+// means it needs a record to already exist, so the flow is always:
+// 1. Create the Service Request record first (existing submit functions)
+// 2. Call this once per selected image, using the new record's ID
+export async function uploadRequestImage(
+  recordId: string,
+  base64Content: string,
+  filename: string,
+  contentType: string
+): Promise<boolean> {
+  try {
+    const apiKey = process.env.NEXT_PUBLIC_AIRTABLE_API_KEY
+    const response = await fetch(
+      `https://content.airtable.com/v0/app3AwDclb6uHhH1J/${recordId}/fldpMY9JNjBLJFImb/uploadAttachment`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contentType,
+          file: base64Content,
+          filename,
+        }),
+      }
+    )
+    if (!response.ok) {
+      const text = await response.text()
+      console.error('❌ Airtable image upload failed:', response.status, text)
+      return false
+    }
+    return true
+  } catch (error: any) {
+    console.error('❌ Error uploading request image:', error.message)
+    return false
+  }
+}
+
+export async function uploadRequestImages(
+  recordId: string,
+  files: { base64Content: string; filename: string; contentType: string }[]
+): Promise<boolean> {
+  try {
+    // Sequential, not Promise.all — Airtable's upload endpoint can drop
+    // attachments if the same record is hit with several uploads at once.
+    for (const file of files) {
+      const ok = await uploadRequestImage(recordId, file.base64Content, file.filename, file.contentType)
+      if (!ok) return false
+    }
+    return true
+  } catch (error: any) {
+    console.error('❌ Error uploading request images:', error.message)
+    return false
+  }
+}
+
+// Board members and management users both have a Profile Photo field —
+// residents don't have any photo source in this system at all, so this
+// naturally covers "photo if we have one, initials if we don't."
+async function getPeoplePhotoMap(): Promise<Record<string, string>> {
+  const map: Record<string, string> = {}
+  try {
+    if (!base) return map
+ 
+    const boardRecords = await base('Board Members').select().all()
+    for (const r of boardRecords) {
+      const email = (r.get('Email') as string)?.toLowerCase()
+      const photo = (r.get('Profile Photo') as any[])?.[0]?.url
+      if (email && photo) map[email] = photo
+    }
+ 
+    const mgmtRecords = await base('Management Companies').select().all()
+    for (const r of mgmtRecords) {
+      const email = (r.get('Email') as string)?.toLowerCase()
+      const photo = (r.get('Profile Photo') as any[])?.[0]?.url
+      if (email && photo) map[email] = photo
+    }
+  } catch (error: any) {
+    console.error('❌ Error building people photo map:', error.message)
+  }
+  return map
+}
+ 
+export async function getThreadSummaries(): Promise<Map<number, ThreadSummary>> {
+  const summaries = new Map<number, ThreadSummary>()
+  try {
+    if (!base) return summaries
+ 
+    const [records, photoMap] = await Promise.all([
+      base('Request Queries').select().all(),
+      getPeoplePhotoMap(),
+    ])
+ 
+    for (const r of records) {
+      const requestIdNumber = r.get('Request ID Number') as number | undefined
+      if (!requestIdNumber) continue
+ 
+      const queryText = (r.get('Query Text') as string) || ''
+      const askedByName = (r.get('Asked By Name') as string) || ''
+      const askedByEmail = (r.get('Asked By Email') as string) || ''
+      const responseText = r.get('Response Text') as string | undefined
+ 
+      const existing = summaries.get(requestIdNumber) || { messageCount: 0, participants: [] }
+ 
+      existing.messageCount += queryText ? 1 : 0
+      existing.messageCount += responseText ? 1 : 0
+ 
+      if (askedByEmail && !existing.participants.some((p) => p.email.toLowerCase() === askedByEmail.toLowerCase())) {
+        existing.participants.push({
+          name: askedByName || askedByEmail,
+          email: askedByEmail,
+          photoUrl: photoMap[askedByEmail.toLowerCase()],
+        })
+      }
+ 
+      summaries.set(requestIdNumber, existing)
+    }
+  } catch (error: any) {
+    console.error('❌ Error fetching thread summaries:', error.message)
+  }
+  return summaries
 }

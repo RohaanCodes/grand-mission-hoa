@@ -8,13 +8,17 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  Archive,
 } from 'lucide-react'
 import { getAllServiceRequests, getBoardMemberById } from '@/lib/airtable'
 import VotingSection from '../VotingSection'
+import ResolvedVoteCard from '../ResolvedVoteCard'
 import Sidebar from '../Sidebar'
 import BottomNav from '../BottomNav'
 
 export const metadata = { title: 'Board Votes | Grand Mission HOA' }
+
+const TWO_DAYS_MS = 2 * 24 * 60 * 60 * 1000
 
 export default async function BoardVotesPage() {
   const cookieStore = await cookies()
@@ -26,8 +30,18 @@ export default async function BoardVotesPage() {
 
   const requests = await getAllServiceRequests()
   const openVotes = requests.filter((r) => r.voting_open)
-  const approved = requests.filter((r) => r.vote_outcome === 'Approved')
-  const rejected = requests.filter((r) => r.vote_outcome === 'Rejected')
+  const allApproved = requests.filter((r) => r.vote_outcome === 'Approved')
+  const allRejected = requests.filter((r) => r.vote_outcome === 'Rejected')
+
+  const now = Date.now()
+  function isRecent(r: (typeof requests)[number]): boolean {
+    if (!r.vote_resolved_date) return true // no timestamp yet — treat as recent rather than hide it
+    return now - new Date(r.vote_resolved_date).getTime() <= TWO_DAYS_MS
+  }
+
+  const recentApproved = allApproved.filter(isRecent)
+  const recentRejected = allRejected.filter(isRecent)
+  const archivedCount = (allApproved.length - recentApproved.length) + (allRejected.length - recentRejected.length)
 
   return (
     <div className="dashboard flex min-h-screen bg-slate-50">
@@ -43,39 +57,55 @@ export default async function BoardVotesPage() {
           </Link>
 
           {/* Header */}
-          <div className="flex items-center gap-3 mb-8">
-            <span className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
-              <Gavel className="w-5 h-5" strokeWidth={2} />
-            </span>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                Board Votes
-              </h1>
-              <p className="text-sm text-slate-500 mt-0.5">
-                Review and cast votes on open motions
-              </p>
+          <div className="flex items-center justify-between gap-3 mb-8">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
+                <Gavel className="w-5 h-5" strokeWidth={2} />
+              </span>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                  Board Votes
+                </h1>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  Review and cast votes on open motions
+                </p>
+              </div>
             </div>
+
+            <Link
+              href="/board/votes/archive"
+              className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-200 bg-white rounded-lg px-3.5 py-2 transition-colors flex-shrink-0"
+            >
+              <Archive className="w-4 h-4" strokeWidth={2} />
+              Archive
+              {archivedCount > 0 && (
+                <span className="text-xs font-semibold bg-slate-100 text-slate-600 rounded-full px-1.5">{archivedCount}</span>
+              )}
+            </Link>
           </div>
 
-          {/* Stats */}
+          {/* Stats — same solid-light-color card language as the Overview KPI row */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-            <StatCard
+            <KpiCard
               icon={<Clock className="w-4.5 h-4.5" strokeWidth={2} />}
               value={openVotes.length}
               label="Currently Open"
-              accent="bg-blue-50 text-blue-600"
+              sub="awaiting a decision"
+              gradient="from-blue-400 to-blue-600"
             />
-            <StatCard
+            <KpiCard
               icon={<CheckCircle2 className="w-4.5 h-4.5" strokeWidth={2} />}
-              value={approved.length}
+              value={allApproved.length}
               label="Approved"
-              accent="bg-emerald-50 text-emerald-600"
+              sub="passed by the board"
+              gradient="from-emerald-400 to-emerald-600"
             />
-            <StatCard
+            <KpiCard
               icon={<XCircle className="w-4.5 h-4.5" strokeWidth={2} />}
-              value={rejected.length}
+              value={allRejected.length}
               label="Rejected"
-              accent="bg-red-50 text-red-600"
+              sub="did not pass"
+              gradient="from-rose-400 to-rose-600"
             />
           </div>
 
@@ -97,35 +127,31 @@ export default async function BoardVotesPage() {
                   {openVotes.map((req) => (
                     <div
                       key={req.id}
-                      className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden"
+                      className="bg-white border border-slate-200/80 rounded-2xl shadow-sm p-5"
                     >
-                      {/* Soft blue request summary */}
-                      <div className="px-5 py-4 bg-blue-50/60 border-b border-blue-100/80">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h3 className="text-[15px] font-semibold text-slate-900">
-                              {req.final_category ||
-                                req.category_resident_selected ||
-                                'Other'}
-                            </h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                              {req.requester_name}
-                              {req.unit_address
-                                ? ` · ${req.unit_address}`
-                                : ''}
-                            </p>
-                          </div>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 flex-shrink-0">
-                            Open for vote
-                          </span>
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div>
+                          <h3 className="text-[15px] font-semibold text-slate-900">
+                            {req.final_category ||
+                              req.category_resident_selected ||
+                              'Other'}
+                          </h3>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {req.requester_name}
+                            {req.unit_address
+                              ? ` · ${req.unit_address}`
+                              : ''}
+                          </p>
                         </div>
-                        <p className="text-sm text-slate-600 mt-3 leading-relaxed line-clamp-3">
-                          {req.description}
-                        </p>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 flex-shrink-0">
+                          Open for vote
+                        </span>
                       </div>
+                      <p className="text-sm text-slate-600 mb-4 leading-relaxed line-clamp-3">
+                        {req.description}
+                      </p>
 
-                      {/* White voting area */}
-                      <div className="p-4">
+                      <div className="pt-4 border-t border-slate-100">
                         <VotingSection
                           requestRecordId={req.id}
                           viewerRole="board"
@@ -138,49 +164,32 @@ export default async function BoardVotesPage() {
               )}
             </div>
 
-            {/* Resolved votes */}
+            {/* Resolved votes — real snapshot, last 2 days only */}
             <div>
-              <h2 className="text-base font-semibold text-slate-900 mb-4">
-                Recently Resolved
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-slate-900">
+                  Recently Resolved
+                </h2>
+                <Link
+                  href="/board/votes/archive"
+                  className="sm:hidden inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-800"
+                >
+                  <Archive className="w-3.5 h-3.5" strokeWidth={2} />
+                  Archive
+                </Link>
+              </div>
 
-              {approved.length === 0 && rejected.length === 0 ? (
+              {recentApproved.length === 0 && recentRejected.length === 0 ? (
                 <div className="bg-white border border-slate-200/80 rounded-2xl p-12 text-center">
                   <p className="text-slate-400 text-sm">
-                    No votes have been resolved yet.
+                    No votes have resolved in the last 2 days.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {[...approved, ...rejected].map((req) => {
-                    const isApproved = req.vote_outcome === 'Approved'
-                    return (
-                      <div
-                        key={req.id}
-                        className="bg-white border border-slate-200/80 rounded-xl px-4 py-3.5 shadow-sm"
-                      >
-                        <div className="flex items-center justify-between gap-3 mb-1.5">
-                          <span className="text-sm font-semibold text-slate-900 truncate">
-                            {req.final_category ||
-                              req.category_resident_selected ||
-                              'Other'}
-                          </span>
-                          <span
-                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
-                              isApproved
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                : 'bg-red-50 text-red-700 border border-red-200'
-                            }`}
-                          >
-                            {req.vote_outcome}
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 line-clamp-2">
-                          {req.description}
-                        </p>
-                      </div>
-                    )
-                  })}
+                  {[...recentApproved, ...recentRejected].map((req) => (
+                    <ResolvedVoteCard key={req.id} req={req} viewerRole="board" currentEmail={boardMember.email} />
+                  ))}
                 </div>
               )}
             </div>
@@ -193,32 +202,30 @@ export default async function BoardVotesPage() {
   )
 }
 
-function StatCard({
+function KpiCard({
   icon,
   value,
   label,
-  accent,
+  sub,
+  gradient,
 }: {
   icon: React.ReactNode
   value: number
   label: string
-  accent: string
+  sub: string
+  gradient: string
 }) {
   return (
-    <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
-      <div className="flex items-center gap-3">
-        <div
-          className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${accent}`}
-        >
+    <div className={`relative overflow-hidden rounded-2xl p-4 text-white shadow-lg bg-gradient-to-br ${gradient}`}>
+      <div className="absolute -right-4 -top-4 w-20 h-20 rounded-full bg-white/5 blur-xl pointer-events-none" />
+      <div className="relative flex items-start justify-between gap-2 mb-3">
+        <span className="text-xs font-semibold uppercase tracking-wide text-white/90 leading-tight">{label}</span>
+        <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
           {icon}
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
-            {value}
-          </p>
-          <p className="text-xs text-slate-500 mt-1">{label}</p>
-        </div>
+        </span>
       </div>
+      <p className="relative text-3xl font-bold leading-none mb-1.5">{value}</p>
+      <p className="relative text-xs text-white/80">{sub}</p>
     </div>
   )
 }

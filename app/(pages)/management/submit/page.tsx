@@ -11,11 +11,11 @@ export default async function ManagementSubmitPage() {
   const categories = await getRequestCategories()
 
   return (
-    <main className="min-h-screen bg-background">
-      <section className="max-w-2xl mx-auto px-6 py-16 md:py-24">
-        <h1 className="font-serif text-4xl text-primary mb-2">Log an Item</h1>
-        <p className="text-foreground/70 mb-8">
-          Submit something directly — include a solution and timeline if you already have one.
+    <main className="min-h-screen bg-slate-50">
+      <section className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-1">Log an Item</h1>
+        <p className="text-slate-500 text-sm mb-6">
+          Submit something directly, include a solution and timeline if you already have one.
         </p>
         <ManagementRequestForm categories={categories} />
       </section>
